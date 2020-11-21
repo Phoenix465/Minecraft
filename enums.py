@@ -1,6 +1,9 @@
+"""
+Handler for Enums (Enumerations)
+"""
+
 from enum import Enum
 from colour import Colour
-
 
 class BlockType(Enum):
     AIR = 1

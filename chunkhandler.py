@@ -1,3 +1,11 @@
+"""
+Handler for the Chunks
+
+Class
+-----
+Chunk - This handle a single Chunk
+"""
+
 from vector import *
 import pygame.mouse as mouse
 from errors import *
@@ -9,6 +17,60 @@ from time import time
 
 
 class Chunk:
+    """
+    This Class handle a single chunk in Minecrcaft
+
+    Parameters
+    ----------
+    bottomCentre : Vector3
+        The Position of the Chunk for the Bottom Centre
+
+    size : Vector3
+        Size of the Chunk
+
+    Attributes
+    ----------
+    size : Vector3
+        Size of the Chunk
+
+    bottomCentre : Vector3
+        The Position of the Chunk for the Bottom Centre
+
+    mouse0Debounce : bool
+        Debounce for whether the the Left-Mouse Click is already Registered
+
+    mouse2Debounce : bool
+        Debounce for whether the the Right-Mouse Click is already Registered
+
+    mouse0LastRegistered : float
+        Last Time the Left-Mouse Click was Registered
+
+    mouse2LastRegistered : float
+        Last Time the Right-Mouse Click was Registered
+
+    mouse0Timeout : float
+        Time before the Debounce of the Left-Mouse Click Ends
+
+    mouse2Timeout : float
+        Time before the Debounce of the Right-Mouse Click Ends
+
+    blocks : list
+        A empty list originally
+        After generation, is a triple layer nested list. The first state is the Y, then X, then Z
+
+    blocksCanSee : list
+        A list containing Block(s) that can be seen.
+
+    adjacentBlockData : list
+        A list containing Vector3 that are relative to the surfaces on the Block class
+
+    highlightedBlock : None/Block
+        Update by the Camera Class to check what Block is Highlighted
+
+    highlightedSurfaceIndex : None/int
+        The Surface Index of the Highlighted Surface
+    """
+
     def __init__(self, bottomCentre: Vector3, size: Vector3):
         self.size = size
         self.bottomCentre = bottomCentre
@@ -64,6 +126,14 @@ class Chunk:
         self.updateAllSurface()
 
     def updateAllSurface(self):
+        """
+        Updates All Surfaces of each Block inside the self.Blocks, to see whether a surface should be visible or not
+
+        Returns
+        -------
+        None
+        """
+
         self.blocksCanSee = []
         for yI, yList in enumerate(self.blocks):
             for xI, xList in enumerate(yList):
@@ -71,6 +141,19 @@ class Chunk:
                     self.updateBlockSurfaces(block)
 
     def updateBlockSurfaces(self, block):
+        """
+        Updates A Single Block's Surfaces and can either Add or Remove them from self.blocksCanSee
+
+        Parameters
+        ----------
+        block : Block
+            A Block which should be inside the self.blocks
+
+        Returns
+        -------
+        None
+        """
+
         pos = block.blockPosChunk
 
         if block.blockType == enums.BlockType.AIR:
@@ -101,6 +184,19 @@ class Chunk:
             self.blocksCanSee.remove(block)
 
     def updateSurfacesAroundBlock(self, block):
+        """
+        Applies the self.updateBlockSurfaces for the adjacent Blocks around the block Parameter
+
+        Parameters
+        ----------
+        block : Block
+            The Block in which the adjacent Blocks should be Updated
+
+        Returns
+        -------
+        None
+        """
+
         pos = block.blockPosChunk
 
         for i, adjacentBlockCoordAdjust in enumerate(self.adjacentBlockData):
@@ -111,10 +207,31 @@ class Chunk:
                 self.updateBlockSurfaces(self.blocks[adjustCoord.Y][adjustCoord.X][adjustCoord.Z])
 
     def draw(self):
+        """
+        Draws the Blocks which can be Seen
+
+        Returns
+        -------
+        None
+        """
+
         for block in self.blocksCanSee:
             block.drawSolid()
     
     def removeBlock(self, block: Block):
+        """
+        Removes a Block and Updates it's surfaces and the Blocks around it
+
+        Parameters
+        ----------
+        block : Block
+            The block which should be removed
+
+        Returns
+        -------
+        None
+        """
+
         self.blocksCanSee.remove(block)
 
         self.highlightedBlock.blockType = enums.BlockType.AIR
@@ -122,6 +239,22 @@ class Chunk:
         self.updateSurfacesAroundBlock(block)
 
     def addBlock(self, block: Block, surfaceIndex: int):
+        """
+        Adds a Block based on the surfaceIndex and Updates it's surfaces and the Blocks around it
+
+        Parameters
+        ----------
+        block : Block
+            The block which the new Block will be added on Relative to the surfaceIndex
+
+        surfaceIndex : int
+            The Surface Relative to the Block
+
+        Returns
+        -------
+        None
+        """
+
         addition = self.adjacentBlockData[surfaceIndex]
 
         newBlockPos = block.blockPosChunk + addition
@@ -140,6 +273,14 @@ class Chunk:
         self.updateSurfacesAroundBlock(targetBlock)
 
     def HandleMouseClicks(self):
+        """
+        Handles the Add/Remove Block based on the Mouse Click
+
+        Returns
+        -------
+        None
+        """
+
         currrentTime = time()
 
         if self.mouse0LastRegistered + self.mouse0Timeout < currrentTime:

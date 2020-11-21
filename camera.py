@@ -1,3 +1,11 @@
+"""
+Handler for the Camera Class
+
+Class
+-----
+Camera - This Class handles the Client's Camera
+"""
+
 from vector import *
 from pygame import K_w, K_a, K_s, K_d, K_q, K_e
 from OpenGL.GL import *
@@ -8,12 +16,58 @@ import enums
 from blockhandler import Block
 from chunkhandler import *
 
-
 class Camera:
+    """
+    This Class handles the player Camera
+
+    Parameters
+    ----------
+    startPos : Vector3
+        Start Position of the Camera
+
+    displayCentre : tuple
+        Centre of the window size
+
+    Attributes
+    ----------
+    currentCameraPosition : Vector3
+        A Vector3 of the current camera position
+
+    lookVector : Vector3
+        A Normalised Vector3 of the camera looking direction
+
+    raycastUpdateLength : float
+        The Accuracy of the highlight-block raycasting
+        
+    lastMousePosition : Vector3
+        A Vector2 of the mouse's current position on the window
+
+    distance : flaot
+        The distance moved per frame - sensitive to change
+
+    sentivity : float
+        Mouse Sensitivity when moving the mouse
+
+    upDownAngle : int
+        The Up-Down angle of the Camera - Foward:0, Up:90, Dowm:-90
+
+    leftRightAndle : int
+        The Left-Right angle of the Camera - Forward:0, Left: -90, Right: 90
+
+    displayCentre: tuple
+        Centre of the window size
+
+    displaySize : tuple
+        Double the displayCentre - Size of window
+
+    updatePos : Vector2
+        Vector2 used for postion of the crosshair
+    """
+
     def __init__(self, startPos:Vector3, displayCentre: tuple):
         self.currentCameraPosition = startPos
         self.lookVector = Vector3(0, 0, 0)
-        self.trigLength = 0.1
+        self.raycastUpdateLength = 0.1
 
         self.lastMousePosition = Vector2(*get_pos())
         self.distance = 0.005
@@ -27,14 +81,38 @@ class Camera:
         self.updatePos = Vector2(*self.displayCentre)
 
     def updateLookVector(self):
-        xzLength = cos(self.upDownAngle) * self.trigLength
+        """
+        Updates the Look Vector of the Camera and stores it in self.lookVector
+
+        Returns
+        -------
+        None
+        """
+
+        xzLength = cos(self.upDownAngle) * self.raycastUpdateLength
         trigAddVector = Vector3(sin(-self.leftRightAngle) * xzLength,
-                                sin(self.upDownAngle) * self.trigLength,
+                                sin(self.upDownAngle) * self.raycastUpdateLength,
                                 cos(-self.leftRightAngle) * xzLength)
 
         self.lookVector = trigAddVector
 
     def move(self, dt, viewMatrix):
+        """
+        Controls the Movement of the Camera
+
+        Parameters
+        ----------
+        dt : float
+            Time passed since last frame
+
+        viewMatrix : OpenGL.arrays.ctypesarrays.c_float_Array_4_Array_4
+            Used to transform from world-space into view-space
+
+        Returns
+        -------
+        OpenGL.arrays.ctypesarrays.c_float_Array_4_Array_4
+        """
+
         glLoadIdentity()
 
         currentMousePosition = Vector2(*get_pos())
@@ -124,6 +202,14 @@ class Camera:
         return viewMatrix
 
     def drawCrosshair(self):
+        """
+        Draws the Crosshair in the Centre of the Screen
+
+        Returns
+        -------
+        None
+        """
+
         def Crosshair(x, y, w):
             glColor3f(1.0, 1.0, 1.0)
             glBegin(GL_LINES)
@@ -154,6 +240,23 @@ class Camera:
         glPopMatrix()
 
     def highlightBlock(self, currentChunk: Chunk, maxDist=8):
+        """
+        Sets the Highlighted Block Data on the Chunk
+        Can set the chunk data to None
+
+        Parameters
+        ----------
+        currentChunk : chunkhandler.Chunk
+            Chunk that is to be tested for the highlighted block
+
+        maxDist : int
+            Maximum Distance of the Camera Raycast
+
+        Returns
+        -------
+        None
+        """
+
         distDiff = 0
 
         currentRayPosition = self.currentCameraPosition
@@ -167,7 +270,7 @@ class Camera:
                     return
 
             currentRayPosition -= self.lookVector
-            distDiff += self.trigLength
+            distDiff += self.raycastUpdateLength
 
         currentChunk.highlightedBlock = None
         currentChunk.highlightedSurfaceIndex = None

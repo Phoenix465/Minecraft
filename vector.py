@@ -1,3 +1,12 @@
+"""
+Handles For Vectors Types
+
+Class
+----
+Vector2 - 2D Vector
+Vector3 - 3D Vector
+"""
+
 from dataclasses import dataclass
 from math import sqrt
 from errors import *
@@ -5,6 +14,41 @@ from errors import *
 
 @dataclass()
 class Vector2:
+    """
+    2D Vector
+
+    Parameters
+    ----------
+    X : float
+        X Pos of the Vector2
+
+    Y : float
+        Y Pos of the Vector2
+
+    Attributes
+    ----------
+    _X : float
+        Hidden X Pos
+
+    _Y : float
+        Hidden Y Pos
+
+    _observers : list
+        A list containing functions which are called when the pos's are updated
+
+    list : list
+        A List Version of the Vector
+
+    tuple : tuple
+        A Tuple Version of the Vector
+
+    magnitude : tuple
+        The Length of the Vector
+
+    _unit : tuple
+        The Tuple Form of the Normalised Vector
+    """
+
     def __init__(self, X, Y):
         if type(X) != int and type(X) != float:
             raise VectorError("X Has To Be Of Class int/float")
@@ -56,10 +100,37 @@ class Vector2:
             callback(self._Y)
 
     def bindTo(self, callback):
-        #print("Binding")
+        """
+        To Bind Functions which update the Other Attributes
+
+        Parameters
+        ----------
+        callback : function
+            A Function Name Not being Called Yet
+
+        Returns
+        -------
+        None
+        """
         self._observers.append(callback)
 
     def operationHandler(self, other, operation):
+        """
+        Returns a New Vector Which is Adjusted
+
+        Parameters
+        ----------
+        other : any
+            The new type that is adjusted to the Vector2
+
+        operation : str
+            The str that is used for the function adjustment
+
+        Returns
+        -------
+        Vector2
+        """
+
         functionDict = {
             "+": lambda a, b: a + b,
             "-": lambda a, b: a - b,
@@ -125,6 +196,47 @@ class Vector2:
 
 @dataclass()
 class Vector3(object):
+    """
+    3D Vector
+
+    Parameters
+    ----------
+    X : float
+        X Pos of the Vector3
+
+    Y : float
+        Y Pos of the Vector3
+
+    Z : float
+        Z Pos of the Vector3
+
+    Attributes
+    ----------
+    _X : float
+        Hidden X Pos
+
+    _Y : float
+        Hidden Y Pos
+
+    _Z : float
+        Hidden Z Pos
+
+    _observers : list
+        A list containing functions which are called when the pos's are updated
+
+    list : list
+        A List Version of the Vector
+
+    tuple : tuple
+        A Tuple Version of the Vector
+
+    magnitude : tuple
+        The Length of the Vector
+
+    _unit : tuple
+        The Tuple Form of the Normalised Vector
+    """
+
     def __init__(self, X, Y, Z):
         if type(X) != int and type(X) != float:
             raise VectorError("X Has To Be Of Class int/float")
@@ -191,10 +303,39 @@ class Vector3(object):
             callback(self._Z)
 
     def bindTo(self, callback):
+        """
+         To Bind Functions which update the Other Attributes
+
+         Parameters
+         ----------
+         callback : function
+             A Function Name Not being Called Yet
+
+         Returns
+         -------
+         None
+         """
+
         #print("Binding")
         self._observers.append(callback)
 
     def operationHandler(self, other, operation):
+        """
+        Returns a New Vector Which is Adjusted
+
+        Parameters
+        ----------
+        other : any
+            The new type that is adjusted to the Vector3
+
+        operation : str
+            The str that is used for the function adjustment
+
+        Returns
+        -------
+        Vector3
+        """
+
         functionDict = {
             "+": lambda a, b: a + b,
             "-": lambda a, b: a - b,

@@ -6,7 +6,8 @@ from playerhandler import *
 from chunkhandler import *
 from skyhandler import *
 from vector import Vector3
-
+import camera
+help(camera)
 
 FirstChunk = Chunk(Vector3(0, 0, 0), Vector3(16, 16, 16))
 
@@ -44,7 +45,7 @@ def main():
     sky = Sky(player.camera)
 
     while True:
-        dt = clock.tick(60)
+        dt = clock.tick(30)
 
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -55,7 +56,7 @@ def main():
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
             viewMatrix = player.move(dt, viewMatrix)
-
+            print(type(viewMatrix))
             glPushMatrix()
             FirstChunk.HandleMouseClicks()
 

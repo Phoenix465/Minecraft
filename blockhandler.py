@@ -1,12 +1,83 @@
+"""
+Handler for the Blocks
+
+Class
+-----
+Block - This Class handle a single block
+"""
+
 from vector import *
 from OpenGL.GL import *
 import enums
 from degreesMath import average
 
+
 colourHandler = enums.BlockColour()
 
 
 class Block:
+    """
+    This Class handle a single block in minecraft
+
+    Parameters
+    ----------
+    centre : Vector3
+        Centre-point of the block
+
+    blockType : enums.BlockType
+        Block type of the block
+
+    sideLength : None
+        Keyword-Argument, default value is None but is can be set to 1
+        When value is None, side length is 1
+        Otherwise it uses your current value for sideLength as a side length
+
+    Attributes
+    ----------
+    side : int
+        Side Length of Block - Cube
+
+    halfSide : int
+        Half of the side length
+
+    blockType : enums.BlockType
+        Current Block Type of the Block
+
+    blockPosChunk : Vector3
+        Position of the Block in it's Chunk
+
+    closestSurface : None / int
+        During Runtime can change to int based on the surface index otherwise is None
+
+    centre: Vector3
+        Vector3 of the Centre of the Block
+
+    vertices: list
+        Contains a list of Vector3 Vertices of the block, all relative to the centre point
+
+    edges : list
+        Contains a list of tuple which each contain a tuple which refers to two vertex of the block, hence making a edge
+
+    normals : list
+        Contains a list of Vector3 used for light diffraction, based on the orientation of the surface
+
+    surfaces : list
+        Contains a list of tuple of length 4 which contain the indexes to the Vertex of the cube
+        4 indexes referring to a vertex on the block in order
+
+    surfaceMiddle : list
+        Originally contains a empty list
+        After generation stores Vector3's which are the centre point of each face respective to the centre of the block
+
+    surfaceEdgeLinker : list
+        Contains a list of tuple with length 2
+        Each refer to the index of the surfaces tuple
+
+    surfacesShow : list
+        Contains a list of length 6 (bool) which refer to the surface
+        Boolean values refer to whether that surfaces should be drawn
+    """
+
     def __init__(self, centre: Vector3, blockType: enums.BlockType, sideLength=None):
         if sideLength:
             self.side = sideLength
@@ -54,14 +125,14 @@ class Block:
         ]
 
         self.normals = [
-            (0, 1, 0),
-            (0, -1, 0),
+            Vector3(0, 1, 0),
+            Vector3(0, -1, 0),
 
-            (0, 0, 1),
-            (0, 0, -1),
+            Vector3(0, 0, 1),
+            Vector3(0, 0, -1),
 
-            (-1, 0, 0),
-            (1, 0, 0),
+            Vector3(-1, 0, 0),
+            Vector3(1, 0, 0),
         ]
 
         self.surfaces = [
@@ -93,6 +164,14 @@ class Block:
         ]
 
     def genMiddleSurface(self):
+        """
+        Generates the Middle Point of each Surface and appends to the list self.surfaceMiddle
+
+        Returns
+        -------
+        None
+        """
+
         for i, surfaceTuple in enumerate(self.surfaces):
             firstVector = self.vertices[surfaceTuple[0]]
             secondVector = self.vertices[surfaceTuple[2]]
@@ -104,6 +183,19 @@ class Block:
             ))
 
     def drawWire(self, drawSurfacesShown=False):
+        """
+        Draws the each Edge of the Block in White
+
+        Parameters
+        ----------
+        drawSurfacesShown : bool
+            Boolean refers to whether the program should only wire the surfaces that can be seen
+
+        Returns
+        -------
+        None
+        """
+
         glBegin(GL_LINES)
 
         if not drawSurfacesShown:
@@ -123,7 +215,19 @@ class Block:
         glEnd()
 
     def drawSolid(self, wireSurface=False):
-        # print(self.blockType, )
+        """
+        Draws the surfaces of the block that can be seen, supports wiring the surfaces that can be seen.
+
+        Parameters
+        ----------
+        wireSurface : bool
+            Boolean Value refers to whether the surfaces that can be seen should be wired
+
+        Returns
+        -------
+        None
+        """
+
         vertexColour = colourHandler.get(self.blockType).RGBTuple
 
         glBegin(GL_QUADS)
@@ -131,7 +235,7 @@ class Block:
             if not self.surfacesShow[i]:
                 continue
 
-            glNormal3fv(self.normals[i])
+            glNormal3fv(self.normals[i].tuple)
 
             for blockVertex in blockQuad:
                 glColor3fv(vertexColour)
@@ -154,12 +258,38 @@ class Block:
                         glEnd()
 
     def isPointInBlock(self, point: Vector3):
+        """
+        Checks whether a Point is inside the Block or not
+
+        Parameters
+        ----------
+        point : Vector3
+            The point the block checks is inside itself
+
+        Returns
+        -------
+        bool
+        """
+
         maxVector = self.vertices[7]
         minVector = self.vertices[6]
 
         return minVector.X < point.X < maxVector.X and minVector.Y < point.Y < maxVector.Y and minVector.Z < point.Z < maxVector.Z
 
     def closestSurfaceIndex(self, point: Vector3):
+        """
+        Given a Point, returns the closest surface index that is closest to it
+
+        Parameters
+        ----------
+        point : Vector3
+            The point that is being used to check for the closest surface
+
+        Returns
+        -------
+        int
+        """
+
         closestDist = 20
         closestSurfaceI = None
 

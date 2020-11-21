@@ -1,9 +1,73 @@
+"""
+Handler for the Colour
+
+Class
+-----
+Colour - Handles a RGB/HSV Colour
+"""
+
 import colorsys
 from errors import *
 
 
 class Colour:
-    def __init__(self, r, g, b, isHSV = False,  convertToDecimal = False):
+    """
+    This Class handle a Single Colour
+
+    Parameters
+    ----------
+    r : float
+        The Red of RGB or the Hue of HSV (isHSV has to be True)
+
+    g : float
+        The Green of RGB or the Saturation of HSV (isHSV has to be True)
+
+    b : float
+        The Blue of RGB or the Value of HSV (isHSV has to be True)
+
+    isHSV : bool
+        A bool representing whether the values given are HSV
+
+    convertToDecimal : bool
+        A bool representing whether the r, b, b values should be divided by 255
+
+    Attributes
+    ----------
+    _observers : list
+        A list containing the functions that are called when the values are updated
+
+    _r : float
+        The Hidden Red (In Decimal Form)
+
+    _g : float
+        The Hidden Green (In Decimal Form)
+
+    _b : float
+        The Hidden Blue (In Decimal Form)
+
+    _h : float
+        The Hidden Hue (In Decimal Form)
+
+    _s : float
+        The Hidden Saturation (In Decimal Form)
+
+    _v : float
+        The Hidden Value (In Decimal Form)
+        
+    RGBList : list
+        A list containing the RGB values
+    
+    HSVList : list
+            A list containing the HSV values
+
+    RGBTuple : float
+            A tuple containing the RGB values
+
+    HSVTuple : float
+            A tuple containing the HSV values
+    """
+
+    def __init__(self, r, g, b, isHSV=False,  convertToDecimal=False):
         if type(r) != int and type(r) != float:
             raise ColourError("R/H Has To Be Of Class int/float")
         if type(g) != int and type(g) != float:
@@ -41,7 +105,7 @@ class Colour:
         self.RGBList = [self.r, self.g, self.b]
         self.HSVList = [self.h, self.s, self.v]
         self.RGBTuple = tuple(self.RGBList)
-        self.HSBTuple = tuple(self.HSVList)
+        self.HSVTuple = tuple(self.HSVList)
 
         self.bindTo(self.updateRGBList)
         self.bindTo(self.updateRGBTuple)
@@ -134,6 +198,6 @@ class Colour:
         self.RGBTuple = tuple(self.RGBList)
 
     def updateHSVTuple(self):
-        self.HSBTuple = tuple(self.HSVList)
+        self.HSVTuple = tuple(self.HSVList)
 
 

@@ -1,3 +1,8 @@
+"""
+Custom Math Class that uses Degrees instead of Radians
+
+"""
+
 from math import sin as oSin
 from math import cos as oCos
 from math import cos as oTan
