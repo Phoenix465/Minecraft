@@ -6,7 +6,7 @@ Class
 Camera - This Class handles the Client's Camera
 """
 
-from vector import *
+from vector import Vector3, Vector2
 from pygame import K_w, K_a, K_s, K_d, K_q, K_e
 from OpenGL.GL import *
 import pygame.key as key
@@ -14,7 +14,7 @@ from pygame.mouse import set_pos, get_pos
 from degreesMath import *
 import enums
 from blockhandler import Block
-from chunkhandler import *
+from chunkhandler import Chunk
 
 class Camera:
     """

@@ -9,7 +9,7 @@ Vector3 - 3D Vector
 
 from dataclasses import dataclass
 from math import sqrt
-from errors import *
+from errors import VectorError
 
 
 @dataclass()
@@ -400,6 +400,17 @@ class Vector3(object):
 
     def updateUnit(self, *args):
         self._unit = tuple(map(lambda num: num / self.magnitude, self.list)) if self.magnitude != 0 else tuple([0, 0, 0])
+    
+    def __key(self):
+        return self.tuple
+
+    def __hash__(self):
+        return hash(self.__key())
+
+    def __eq__(self, other):
+        if isinstance(other, Vector3):
+            return self.__key() == other.__key()
+        return NotImplemented
 
 
 if __name__ == "__main__":

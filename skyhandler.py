@@ -7,7 +7,7 @@ Sky - The Sky
 """
 
 import enums
-from blockhandler import *
+from blockhandler import Block
 
 
 class Sky:

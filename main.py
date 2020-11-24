@@ -2,14 +2,15 @@ import pygame as pg
 from pygame.locals import *
 
 from OpenGL.GLU import *
-from playerhandler import *
-from chunkhandler import *
-from skyhandler import *
+from OpenGL.GL import *
+from world import World
+from chunkhandler import Chunk
+from playerhandler import Player
+from skyhandler import Sky
 from vector import Vector3
-import camera
-help(camera)
+from opensimplex import OpenSimplex
+from time import time
 
-FirstChunk = Chunk(Vector3(0, 0, 0), Vector3(16, 16, 16))
 
 clock = pg.time.Clock()
 
@@ -44,8 +45,15 @@ def main():
     player = Player(Vector3(0, 0, 0), displayCentre)
     sky = Sky(player.camera)
 
+    CurrentWorld = World(player)
+    CurrentWorld.generateChunks()
+    CurrentWorld.generateBlocks()
+    CurrentWorld.linkChunks()
+    CurrentWorld.updateAllSurfaces()
+
+    avg = []
     while True:
-        dt = clock.tick(30)
+        dt = clock.tick(60)
 
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -56,11 +64,10 @@ def main():
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
             viewMatrix = player.move(dt, viewMatrix)
-            print(type(viewMatrix))
             glPushMatrix()
-            FirstChunk.HandleMouseClicks()
+            #FirstChunk.HandleMouseClicks()
 
-            player.setHighlightedBlockData(FirstChunk)
+            #player.setHighlightedBlockData(FirstChunk)
 
             glEnable(GL_LIGHTING)
             glEnable(GL_LIGHT0)
@@ -68,7 +75,8 @@ def main():
             glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
 
             sky.drawSky()
-            FirstChunk.draw()
+
+            CurrentWorld.draw()
 
             glDisable(GL_LIGHT0)
             glDisable(GL_LIGHTING)

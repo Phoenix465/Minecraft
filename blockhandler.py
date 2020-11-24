@@ -6,10 +6,11 @@ Class
 Block - This Class handle a single block
 """
 
-from vector import *
+from vector import Vector3, Vector2
 from OpenGL.GL import *
 import enums
 from degreesMath import average
+from time import time
 
 
 colourHandler = enums.BlockColour()
@@ -162,6 +163,9 @@ class Block:
             True,
             True,
         ]
+
+    def __repr__(self):
+        return "Block"
 
     def genMiddleSurface(self):
         """
