@@ -9,7 +9,9 @@ World - A Single World Handler
 from chunkhandler import Chunk
 from playerhandler import Player
 from opensimplex import OpenSimplex
+from OpenGL.GL import GL_QUADS, glBegin, glEnd
 from vector import Vector3
+import numpy as np
 from math import pow
 from pprint import pprint
 from random import randint
@@ -43,7 +45,7 @@ class World:
             seed=randint(10000, 99999)
         )
 
-        self.chunkSize = Vector3(16, 16, 16)
+        self.chunkSize = Vector3(8, 8, 8)
         self.halfChunk = self.chunkSize / 2
 
         self.adjacentChunkOffsets = [
@@ -58,14 +60,19 @@ class World:
         }
 
     def generateChunks(self):
-        size = 1
+        s = time()
 
+        size = 1
         for chunkMultX in range(-size, size+1):
             for chunkMultY in range(-size, size+1):
                 chunkPosition = self.chunkSize * Vector3(chunkMultX, 0, chunkMultY)
                 self.chunks[chunkPosition] = Chunk(chunkPosition, self.chunkSize, self.noise)
 
-        print("Finished Gen Chunks")
+        print("Finished Gen Chunks", round(time() - s, 2))
+
+    def draw(self):
+        for chunk in self.chunks.values():
+            chunk.draw()
 
     def generateBlocks(self):
         s = time()
@@ -75,7 +82,17 @@ class World:
 
         print("Finished Gen Blocks", round(time() - s, 2))
 
+    def bindBlocks(self):
+        s = time()
+
+        for chunk in self.chunks.values():
+            chunk.bindBlocks()
+
+        print("Finished Bind Blocks", round(time() - s, 2))
+
     def linkChunks(self):
+        s = time()
+
         for chunkPos, chunk in self.chunks.items():
             adjacentData = {}
 
@@ -86,10 +103,12 @@ class World:
 
             chunk.linkChunk(adjacentData)
 
-    def draw(self):
-        for chunk in self.chunks.values():
-            chunk.draw()
+        print("Finished Link Chunks", round(time() - s, 2))
 
     def updateAllSurfaces(self):
+        s = time()
+
         for chunk in self.chunks.values():
             chunk.updateAllSurface()
+
+        print("Finished Update All Surfaces", round(time() - s, 2))

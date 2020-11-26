@@ -6,12 +6,13 @@ Class
 Block - This Class handle a single block
 """
 
-from vector import Vector3, Vector2
 from OpenGL.GL import *
+
 import enums
 from degreesMath import average
-from time import time
-
+from vector import Vector3
+from numpy import array, float32
+from vbohandler import VBOHandler
 
 colourHandler = enums.BlockColour()
 
@@ -151,6 +152,10 @@ class Block:
             # Generated Afterwards
         ]
 
+        self.surfaceVBOs = [
+
+        ]
+
         self.genMiddleSurface()
 
         self.surfaceEdgeLinker = [(0, 1), (1, 2), (2, 3), (3, 0)]
@@ -166,6 +171,21 @@ class Block:
 
     def __repr__(self):
         return "Block"
+
+    def bindData(self):
+        # https://cyrille.rossant.net/2d-graphics-rendering-tutorial-with-pyopengl/
+        # https://stackoverflow.com/questions/15672720/pyopengl-dynamically-updating-values-in-a-vertex-buffer-objecta
+        # http://pyopengl.sourceforge.net/context/tutorials/shader_1.html
+        self.surfaceVBOs = []
+
+        vertexColour = colourHandler.get(self.blockType)
+        vertexColourList = [vertexColour] * 4
+
+        for i, blockQuad in enumerate(self.surfaces):
+            surfacesList = [self.vertices[blockVertex] for blockVertex in blockQuad]
+            normalsList = [self.normals[i]] * 4
+
+            self.surfaceVBOs.append(VBOHandler(surfacesList, vertexColourList, normalsList))
 
     def genMiddleSurface(self):
         """
@@ -217,7 +237,7 @@ class Block:
                         glColor3fv((1, 1, 1))
                         glVertex3fv(self.vertices[blockQuad[linkVertex]].tuple)
         glEnd()
-
+    
     def drawSolid(self, wireSurface=False):
         """
         Draws the surfaces of the block that can be seen, supports wiring the surfaces that can be seen.
@@ -232,20 +252,11 @@ class Block:
         None
         """
 
-        vertexColour = colourHandler.get(self.blockType).RGBTuple
-
-        glBegin(GL_QUADS)
-        for i, blockQuad in enumerate(self.surfaces):
+        for i, vbo in enumerate(self.surfaceVBOs):
             if not self.surfacesShow[i]:
                 continue
 
-            glNormal3fv(self.normals[i].tuple)
-
-            for blockVertex in blockQuad:
-                glColor3fv(vertexColour)
-                glVertex3fv(self.vertices[blockVertex].tuple)
-
-        glEnd()
+            vbo.draw()
 
         if wireSurface:
             for i, blockQuad in enumerate(self.surfaces):

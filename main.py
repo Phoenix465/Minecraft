@@ -1,16 +1,16 @@
+from time import time
+
 import pygame as pg
+from OpenGL.GL import *
+from OpenGL.GLU import *
 from pygame.locals import *
 
-from OpenGL.GLU import *
-from OpenGL.GL import *
-from world import World
-from chunkhandler import Chunk
 from playerhandler import Player
 from skyhandler import Sky
 from vector import Vector3
-from opensimplex import OpenSimplex
-from time import time
-
+from world import World
+from blockhandler import Block
+import enums
 
 clock = pg.time.Clock()
 
@@ -48,6 +48,7 @@ def main():
     CurrentWorld = World(player)
     CurrentWorld.generateChunks()
     CurrentWorld.generateBlocks()
+    CurrentWorld.bindBlocks()
     CurrentWorld.linkChunks()
     CurrentWorld.updateAllSurfaces()
 
@@ -76,7 +77,15 @@ def main():
 
             sky.drawSky()
 
+            s = time()
+
+            # Code
             CurrentWorld.draw()
+
+            end = time() - s
+
+            avg.append(end)
+            #print(sum(avg) / len(avg))
 
             glDisable(GL_LIGHT0)
             glDisable(GL_LIGHTING)

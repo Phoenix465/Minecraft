@@ -10,6 +10,7 @@ from vector import Vector3, Vector2
 import pygame.mouse as mouse
 from blockhandler import Block
 import enums
+from vbohandler import VBOHandler
 from math import sqrt
 from pprint import pprint
 from random import randint
@@ -115,6 +116,8 @@ class Chunk:
         self.highlightedBlock = None
         self.highlightedSurfaceIndex = None
 
+        self.chunkVBO = None
+
     def oldGenerateBlocks(self):
         rangeValues = [-sqrt(2) / 2, sqrt(2) / 2]
         self.blocks = []
@@ -183,6 +186,12 @@ class Chunk:
                     newBlock.blockPosChunk = Vector3(x, y, z)
                     self.blocks[y][x][z] = newBlock
                     #self.blocks[y][x].append(newBlock)
+
+    def bindBlocks(self):
+        for yI, yList in enumerate(self.blocks):
+            for xI, xList in enumerate(yList):
+                for bI, block in enumerate(xList):
+                    block.bindData()
 
     def linkChunk(self, adjacentChunkData):
         """
@@ -407,7 +416,6 @@ class Chunk:
             self.mouse2LastRegistered = time()
 
             if self.highlightedBlock and (self.highlightedSurfaceIndex is not None):
-                print("Spawning Block")
                 self.addBlock(self.highlightedBlock, self.highlightedSurfaceIndex)
             elif self.highlightedBlock:
                 print(self.highlightedSurfaceIndex)
