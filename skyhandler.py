@@ -30,4 +30,4 @@ class Sky:
 
     def drawSky(self):
         skyBlock = Block(self.camera.currentCameraPosition, enums.BlockType.SKY, sideLength=128)
-        skyBlock.drawSolid()
+        skyBlock.drawSolidOld()

@@ -18,6 +18,8 @@ from time import time
 import numpy as np
 
 
+colourHandler = enums.BlockColour()
+
 class Chunk:
     """
     This Class handle a single chunk in Minecraft
@@ -118,39 +120,6 @@ class Chunk:
 
         self.chunkVBO = None
 
-    def oldGenerateBlocks(self):
-        rangeValues = [-sqrt(2) / 2, sqrt(2) / 2]
-        self.blocks = []
-        for y in range(self.size.Y):
-            self.blocks.append([])
-            for x in range(self.size.X):
-                self.blocks[y].append([])
-
-                for z in range(self.size.Z):
-                    newPos = Vector3(x - self.halfSize.X + self.bottomCentre.X, y, z - self.halfSize.Z + self.bottomCentre.Z)
-
-                    maxSolidPoint = self.noise.noise2d(x=newPos.X / self.scale, y=newPos.Z / self.scale) + rangeValues[1]
-                    maxSolidPoint *= self.size.Y / (rangeValues[1] * 2)
-                    maxSolidPoint = int(maxSolidPoint)
-
-                    blockType = enums.BlockType.AIR
-                    if y == maxSolidPoint:
-                        blockType = enums.BlockType.GRASS
-                    elif 0 < y < maxSolidPoint:
-                        blockType = enums.BlockType.DIRT
-                    elif y == 0:
-                        blockType = enums.BlockType.STONE
-
-
-                    newBlock = Block(
-                        newPos,
-                        blockType,
-                        sideLength=1
-                    )
-
-                    newBlock.blockPosChunk = Vector3(x, y, z)
-                    self.blocks[y][x].append(newBlock)
-
     def generateBlocks(self):
         rangeValues = [-sqrt(2) / 2, sqrt(2) / 2]
 
@@ -187,11 +156,27 @@ class Chunk:
                     self.blocks[y][x][z] = newBlock
                     #self.blocks[y][x].append(newBlock)
 
-    def bindBlocks(self):
-        for yI, yList in enumerate(self.blocks):
-            for xI, xList in enumerate(yList):
-                for bI, block in enumerate(xList):
-                    block.bindData()
+    def genChunkVBO(self):
+        combinedChunkData = []
+
+        for block in self.blocksCanSee:
+            for i, surfaceSee in enumerate(block.surfacesShow):
+                if not surfaceSee:
+                    continue
+
+                blockQuad = block.surfaces[i]
+                normal = block.normals[i]
+                colour = colourHandler.get(block.blockType)
+
+                surfacesList = [block.vertices[blockVertex] for blockVertex in blockQuad]
+
+                for vector3 in surfacesList:
+                    combined = vector3.list + colour.RGBList + normal.list
+
+                    for comb in combined:
+                        combinedChunkData.append(comb)
+
+        self.chunkVBO = VBOHandler(combinedChunkData)
 
     def linkChunk(self, adjacentChunkData):
         """
@@ -269,17 +254,17 @@ class Chunk:
 
                     if adjacentChunk:
                         newCoord = adjustCoord
-                        
+
                         if newCoord.X >= self.size.X:
                             newCoord.X = self.size.X - 1
                         elif newCoord.X < 0:
                             newCoord.X = 0
-                            
+
                         if newCoord.Z >= self.size.Z:
                             newCoord.Z = 0
                         elif newCoord.Z < 0:
                             newCoord.Z = self.size.Z - 1
-                        
+
                         adjacentBlock = adjacentChunk.blocks[newCoord.Y][newCoord.X][newCoord.Z]
 
             if adjacentBlock:
@@ -330,6 +315,8 @@ class Chunk:
         None
         """
 
+        self.chunkVBO.draw()
+        return
         for block in self.blocksCanSee:
             block.drawSolid()
 

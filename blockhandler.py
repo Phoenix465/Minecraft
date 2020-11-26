@@ -179,13 +179,20 @@ class Block:
         self.surfaceVBOs = []
 
         vertexColour = colourHandler.get(self.blockType)
-        vertexColourList = [vertexColour] * 4
 
         for i, blockQuad in enumerate(self.surfaces):
             surfacesList = [self.vertices[blockVertex] for blockVertex in blockQuad]
-            normalsList = [self.normals[i]] * 4
 
-            self.surfaceVBOs.append(VBOHandler(surfacesList, vertexColourList, normalsList))
+            combinedData = []
+
+            for vector3 in surfacesList:
+                combined = vector3.list + vertexColour.RGBList + self.normals[i].list
+
+                for comb in combined:
+                    combinedData.append(comb)
+
+            self.surfaceVBOs.append(VBOHandler(combinedData))
+
 
     def genMiddleSurface(self):
         """
@@ -257,6 +264,49 @@ class Block:
                 continue
 
             vbo.draw()
+
+        if wireSurface:
+            for i, blockQuad in enumerate(self.surfaces):
+                if not self.surfacesShow[i]:
+                    continue
+
+                if wireSurface:
+                    for linkVertexTuple in self.surfaceEdgeLinker:
+                        glBegin(GL_LINES)
+
+                        for linkVertex in linkVertexTuple:
+                            glColor3fv((1, 1, 1))
+                            glVertex3fv(self.vertices[blockQuad[linkVertex]].tuple)
+                        glEnd()
+
+    def drawSolidOld(self, wireSurface=False):
+        """
+        Draws the surfaces of the block that can be seen, supports wiring the surfaces that can be seen.
+
+        Parameters
+        ----------
+        wireSurface : bool
+            Boolean Value refers to whether the surfaces that can be seen should be wired
+
+        Returns
+        -------
+        None
+        """
+
+        vertexColour = colourHandler.get(self.blockType).RGBTuple
+
+        glBegin(GL_QUADS)
+        for i, blockQuad in enumerate(self.surfaces):
+            if not self.surfacesShow[i]:
+                continue
+
+            glNormal3fv(self.normals[i].tuple)
+
+            for blockVertex in blockQuad:
+                glColor3fv(vertexColour)
+                glVertex3fv(self.vertices[blockVertex].tuple)
+
+        glEnd()
 
         if wireSurface:
             for i, blockQuad in enumerate(self.surfaces):

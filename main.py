@@ -48,9 +48,9 @@ def main():
     CurrentWorld = World(player)
     CurrentWorld.generateChunks()
     CurrentWorld.generateBlocks()
-    CurrentWorld.bindBlocks()
     CurrentWorld.linkChunks()
     CurrentWorld.updateAllSurfaces()
+    CurrentWorld.genChunkVBOs()
 
     avg = []
     while True:
@@ -85,7 +85,7 @@ def main():
             end = time() - s
 
             avg.append(end)
-            #print(sum(avg) / len(avg))
+            print(sum(avg) / len(avg))
 
             glDisable(GL_LIGHT0)
             glDisable(GL_LIGHTING)

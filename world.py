@@ -45,7 +45,7 @@ class World:
             seed=randint(10000, 99999)
         )
 
-        self.chunkSize = Vector3(8, 8, 8)
+        self.chunkSize = Vector3(16, 16, 16)
         self.halfChunk = self.chunkSize / 2
 
         self.adjacentChunkOffsets = [
@@ -82,13 +82,13 @@ class World:
 
         print("Finished Gen Blocks", round(time() - s, 2))
 
-    def bindBlocks(self):
+    def genChunkVBOs(self):
         s = time()
 
         for chunk in self.chunks.values():
-            chunk.bindBlocks()
+            chunk.genChunkVBO()
 
-        print("Finished Bind Blocks", round(time() - s, 2))
+        print("Finished Gen Chunk VBOs", round(time() - s, 2))
 
     def linkChunks(self):
         s = time()

@@ -7,13 +7,9 @@ from ctypes import c_void_p
 
 
 class VBOHandler:
-    def __init__(self, nestedVectors, nestedColours, normalsVector):
-        self.nestedVectors = nestedVectors
-        self.nestedColours = nestedColours
-        self.normalVectors = normalsVector
-
-        self.combinedData = []
-        self._setCombinedData()
+    def __init__(self, combinedData):
+        self.combinedData = combinedData
+        #self._setCombinedData()
         self.combinedData = np.array(self.combinedData, np.float32)
 
         self.vbo = glVBO.VBO(self.combinedData)
@@ -26,7 +22,7 @@ class VBOHandler:
         glEnableClientState(GL_COLOR_ARRAY)
         glEnableClientState(GL_NORMAL_ARRAY)
 
-        stride = (9)*self.combinedData.itemsize
+        stride = (3+3+3)*self.combinedData.itemsize
 
         glVertexPointer(3, GL_FLOAT, stride, None)
         glColorPointer(3, GL_FLOAT, stride, c_void_p(12))
@@ -36,7 +32,7 @@ class VBOHandler:
 
     def draw(self):
         glBindVertexArray(self.vao)
-        glDrawArrays(GL_QUADS, 0, 9)
+        glDrawArrays(GL_QUADS, 0, len(self.combinedData))
         glBindVertexArray(0)
 
     def _setCombinedData(self):
