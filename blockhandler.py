@@ -90,6 +90,8 @@ class Block:
         self.blockType = blockType
         self.blockPosChunk = Vector3(0, 0, 0)
 
+        self.parentChunk = None
+
         self.closestSurface = None
 
         self.centre = centre
@@ -213,7 +215,7 @@ class Block:
                 average(firstVector.Z, secondVector.Z),
             ))
 
-    def drawWire(self, drawSurfacesShown=False):
+    def drawWire(self):
         """
         Draws the each Edge of the Block in White
 
@@ -229,20 +231,11 @@ class Block:
 
         glBegin(GL_LINES)
 
-        if not drawSurfacesShown:
-            for blockEdge in self.edges:
-                for blockVertex in blockEdge:
-                    glColor3fv((1, 1, 1))
-                    glVertex3fv(self.vertices[blockVertex].tuple)
-        else:
-            for i, blockQuad in enumerate(self.surfaces):
-                if not self.surfacesShow[i]:
-                    continue
+        for blockEdge in self.edges:
+            for blockVertex in blockEdge:
+                glColor3fv((1, 1, 1))
+                glVertex3fv(self.vertices[blockVertex].tuple)
 
-                for linkVertexTuple in self.surfaceEdgeLinker:
-                    for linkVertex in linkVertexTuple:
-                        glColor3fv((1, 1, 1))
-                        glVertex3fv(self.vertices[blockQuad[linkVertex]].tuple)
         glEnd()
     
     def drawSolid(self, wireSurface=False):
@@ -308,19 +301,18 @@ class Block:
 
         glEnd()
 
-        if wireSurface:
-            for i, blockQuad in enumerate(self.surfaces):
-                if not self.surfacesShow[i]:
-                    continue
+    def drawWireSurfaceShow(self):
+        for i, blockQuad in enumerate(self.surfaces):
+            if not self.surfacesShow[i]:
+                continue
 
-                if wireSurface:
-                    for linkVertexTuple in self.surfaceEdgeLinker:
-                        glBegin(GL_LINES)
+            for linkVertexTuple in self.surfaceEdgeLinker:
+                glBegin(GL_LINES)
 
-                        for linkVertex in linkVertexTuple:
-                            glColor3fv((1, 1, 1))
-                            glVertex3fv(self.vertices[blockQuad[linkVertex]].tuple)
-                        glEnd()
+                for linkVertex in linkVertexTuple:
+                    glColor3fv((1, 1, 1))
+                    glVertex3fv(self.vertices[blockQuad[linkVertex]].tuple)
+                glEnd()
 
     def isPointInBlock(self, point: Vector3):
         """

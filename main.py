@@ -46,19 +46,15 @@ def main():
     sky = Sky(player.camera)
 
     CurrentWorld = World(player)
-    CurrentWorld.generateChunks()
-    CurrentWorld.generateBlocks()
-    CurrentWorld.linkChunks()
-    CurrentWorld.updateAllSurfaces()
-    CurrentWorld.genChunkVBOs()
+    CurrentWorld.setup()
 
-    avg = []
     while True:
         dt = clock.tick(60)
 
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit()
+                CurrentWorld.delete()
                 quit()
 
         if pg.mouse.get_focused():
@@ -66,9 +62,15 @@ def main():
 
             viewMatrix = player.move(dt, viewMatrix)
             glPushMatrix()
-            #FirstChunk.HandleMouseClicks()
 
-            #player.setHighlightedBlockData(FirstChunk)
+            CurrentWorld.HandleMouseClicks()
+            CurrentWorld.updateCurrentChunk()
+
+            # Long One
+            s = time()
+            CurrentWorld.setHighlightedBlockData()
+            end = time() - s
+            print("Set Highlighted Block Data", end)
 
             glEnable(GL_LIGHTING)
             glEnable(GL_LIGHT0)
@@ -78,14 +80,9 @@ def main():
             sky.drawSky()
 
             s = time()
-
-            # Code
             CurrentWorld.draw()
-
             end = time() - s
-
-            avg.append(end)
-            print(sum(avg) / len(avg))
+            print("Draw Time", end)
 
             glDisable(GL_LIGHT0)
             glDisable(GL_LIGHTING)

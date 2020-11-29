@@ -36,8 +36,8 @@ class Player:
     def move(self, dt, viewMatrix):
         return self.camera.move(dt, viewMatrix)
 
-    def setHighlightedBlockData(self, chunk: Chunk):
-        self.camera.highlightBlock(chunk)
+    def setHighlightedBlockData(self, blockCheck: list):
+        return self.camera.highlightBlock(blockCheck)
 
     def drawCrosshair(self):
         self.camera.drawCrosshair()

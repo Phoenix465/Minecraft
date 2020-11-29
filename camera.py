@@ -15,6 +15,8 @@ from degreesMath import *
 import enums
 from blockhandler import Block
 from chunkhandler import Chunk
+from time import time
+
 
 class Camera:
     """
@@ -67,7 +69,8 @@ class Camera:
     def __init__(self, startPos:Vector3, displayCentre: tuple):
         self.currentCameraPosition = startPos
         self.lookVector = Vector3(0, 0, 0)
-        self.raycastUpdateLength = 0.1
+        self.raycastUpdateLength = 1
+        self.maxDist = 8
 
         self.lastMousePosition = Vector2(*get_pos())
         self.distance = 0.005
@@ -75,6 +78,9 @@ class Camera:
 
         self.upDownAngle = 0
         self.leftRightAngle = 0
+
+        self.isMoving = False
+        self.lastSeenBlocks = []
 
         self.displayCentre = displayCentre
         self.displaySize = (displayCentre[0] * 2, displayCentre[1] * 2)
@@ -165,6 +171,8 @@ class Camera:
         directionalXVector = directionalXVector.unit * frameDistance
         directionalZVector = directionalZVector.unit * frameDistance
 
+        oldPosition = self.currentCameraPosition
+
         if keysPressed[K_w]:
             self.currentCameraPosition -= directionalXVector
             moveVector.Z += frameDistance
@@ -188,6 +196,8 @@ class Camera:
         if keysPressed[K_e]:
             self.currentCameraPosition.Y += frameDistance
             moveVector.Y -= frameDistance
+
+        self.isMoving = self.currentCameraPosition != oldPosition
 
         glTranslatef(*moveVector.tuple)
 
@@ -239,7 +249,7 @@ class Camera:
         glMatrixMode(GL_MODELVIEW)
         glPopMatrix()
 
-    def highlightBlock(self, currentChunk: Chunk, maxDist=8):
+    def highlightBlock(self, blockCheck: list):
         """
         Sets the Highlighted Block Data on the Chunk
         Can set the chunk data to None
@@ -258,21 +268,26 @@ class Camera:
         """
 
         distDiff = 0
-
         currentRayPosition = self.currentCameraPosition
+        s = time()
 
-        while distDiff < maxDist:
-            for visBlock in currentChunk.blocksCanSee:
+        while distDiff < self.maxDist:
+            for visBlock in blockCheck:
                 if visBlock.isPointInBlock(currentRayPosition):
-                    visBlock.drawWire()
+                    currentChunk = visBlock.parentChunk
+                    
                     currentChunk.highlightedBlock = visBlock
                     currentChunk.highlightedSurfaceIndex = visBlock.closestSurfaceIndex(currentRayPosition)
-                    return
+
+                    e = time() - s
+                    print("Raycasting", e)
+
+                    return currentChunk
 
             currentRayPosition -= self.lookVector
             distDiff += self.raycastUpdateLength
 
-        currentChunk.highlightedBlock = None
-        currentChunk.highlightedSurfaceIndex = None
+        e = time() - s
+        print("Raycasting", e)
 
-
+        return None

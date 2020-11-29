@@ -81,6 +81,8 @@ class Chunk:
         self.size = size
         self.halfSize = size / 2
 
+        self.parentWorld = None
+
         self.bottomCentre = bottomCentre
 
         self.mouse0Debounce = False
@@ -92,7 +94,7 @@ class Chunk:
         self.mouse0Timeout = 0.1
         self.mouse2Timeout = 0.1
 
-        self.blocks = np.array([])
+        self.blocks = np.array([], dtype=Block)
         self.blocksCanSee = np.array([])
 
         self.noise = noise
@@ -117,6 +119,9 @@ class Chunk:
 
         self.highlightedBlock = None
         self.highlightedSurfaceIndex = None
+
+        self.blocksChecked = []
+        self.blocksInRange = []
 
         self.chunkVBO = None
 
@@ -145,19 +150,20 @@ class Chunk:
                     elif y == 0:
                         blockType = enums.BlockType.STONE
 
-
                     newBlock = Block(
                         newPos,
                         blockType,
                         sideLength=1
                     )
 
+                    newBlock.parentChunk = self
                     newBlock.blockPosChunk = Vector3(x, y, z)
+
                     self.blocks[y][x][z] = newBlock
-                    #self.blocks[y][x].append(newBlock)
 
     def genChunkVBO(self):
         combinedChunkData = []
+        self.chunkVBO = None
 
         for block in self.blocksCanSee:
             for i, surfaceSee in enumerate(block.surfacesShow):
@@ -209,7 +215,7 @@ class Chunk:
                 for bI, block in enumerate(xList):
                     self.updateBlockSurfaces(block)
 
-    def updateBlockSurfaces(self, block):
+    def updateBlockSurfaces(self, block, record=False):
         """
         Updates A Single Block's Surfaces and can either Add or Remove them from self.blocksCanSee
 
@@ -251,14 +257,14 @@ class Chunk:
 
                 if offsetCoord.Y == 0:
                     adjacentChunk = self.adjacentChunks[offsetCoord]
-
+                    #print(offsetCoord)
                     if adjacentChunk:
-                        newCoord = adjustCoord
+                        newCoord = Vector3(*adjustCoord.tuple)
 
                         if newCoord.X >= self.size.X:
-                            newCoord.X = self.size.X - 1
-                        elif newCoord.X < 0:
                             newCoord.X = 0
+                        elif newCoord.X < 0:
+                            newCoord.X = self.size.X - 1
 
                         if newCoord.Z >= self.size.Z:
                             newCoord.Z = 0
@@ -266,6 +272,9 @@ class Chunk:
                             newCoord.Z = self.size.Z - 1
 
                         adjacentBlock = adjacentChunk.blocks[newCoord.Y][newCoord.X][newCoord.Z]
+
+                        if record:
+                            self.blocksChecked.append(adjacentBlock)
 
             if adjacentBlock:
                 if adjacentBlock.blockType == enums.BlockType.AIR:
@@ -280,7 +289,7 @@ class Chunk:
             #self.blocksCanSee.append(block)
 
         elif not any(block.surfacesShow) and (block in self.blocksCanSee):
-            self.blocksCanSee = np.delete(self.blocksCanSee, [block])
+            self.blocksCanSee = np.delete(self.blocksCanSee, np.where(self.blocksCanSee == block))
             #self.blocksCanSee.remove(block)
 
     def updateSurfacesAroundBlock(self, block):
@@ -305,6 +314,46 @@ class Chunk:
             if not (any(map(lambda num: num < 0, adjustCoord.tuple)) or
                     any([num >= self.size.tuple[numI] for numI, num in enumerate(adjustCoord.tuple)])):
                 self.updateBlockSurfaces(self.blocks[adjustCoord.Y][adjustCoord.X][adjustCoord.Z])
+            else:
+                # Look in the Adjacent Chunk
+                offsetCoord = [
+                    (num if not num >= self.size.tuple[numI] else 1)
+                    if not 0 < num < self.size.tuple[numI] else 0 for numI, num in enumerate(adjustCoord.tuple)
+                ]
+                offsetCoord = Vector3(*offsetCoord)
+
+                if offsetCoord.Y == 0:
+                    adjacentChunk = self.adjacentChunks[offsetCoord]
+                    #print(offsetCoord)
+                    if adjacentChunk:
+                        newCoord = Vector3(*adjustCoord.tuple)
+
+                        if newCoord.X >= self.size.X:
+                            newCoord.X = 0
+                        elif newCoord.X < 0:
+                            newCoord.X = self.size.X - 1
+
+                        if newCoord.Z >= self.size.Z:
+                            newCoord.Z = 0
+                        elif newCoord.Z < 0:
+                            newCoord.Z = self.size.Z - 1
+
+                        adjacentChunk.updateBlockSurfaces(adjacentChunk.blocks[newCoord.Y][newCoord.X][newCoord.Z])
+
+    def isPointInChunk(self, point: Vector3):
+        maxVector = self.bottomCentre + Vector3(
+            self.size.X/2,
+            self.size.Y,
+            self.size.Z/2
+        )
+
+        minVector = self.bottomCentre - Vector3(
+            self.size.X/2,
+            0,
+            self.size.Z/2
+        )
+
+        return minVector.X < point.X < maxVector.X and minVector.Y < point.Y < maxVector.Y and minVector.Z < point.Z < maxVector.Z
 
     def draw(self):
         """
@@ -315,10 +364,7 @@ class Chunk:
         None
         """
 
-        self.chunkVBO.draw()
-        return
-        for block in self.blocksCanSee:
-            block.drawSolid()
+        if self.chunkVBO: self.chunkVBO.draw()
 
     def removeBlock(self, block: Block):
         """
@@ -334,11 +380,12 @@ class Chunk:
         None
         """
 
-        self.blocksCanSee.remove(block)
-
         self.highlightedBlock.blockType = enums.BlockType.AIR
+
         self.updateBlockSurfaces(block)
         self.updateSurfacesAroundBlock(block)
+        self.genChunkVBO()
+        self.updateVBOChunkAdjacent()
 
     def addBlock(self, block: Block, surfaceIndex: int):
         """
@@ -371,8 +418,16 @@ class Chunk:
 
         randomBlockType = enums.BlockType(randint(1, 4))
         targetBlock.blockType = randomBlockType
+
         self.updateBlockSurfaces(targetBlock)
         self.updateSurfacesAroundBlock(targetBlock)
+        self.genChunkVBO()
+        self.updateVBOChunkAdjacent()
+
+    def updateVBOChunkAdjacent(self):
+        for chunk in self.adjacentChunks.values():
+            if chunk:
+                chunk.genChunkVBO()
 
     def HandleMouseClicks(self):
         """
@@ -382,7 +437,6 @@ class Chunk:
         -------
         None
         """
-
         currrentTime = time()
 
         if self.mouse0LastRegistered + self.mouse0Timeout < currrentTime:

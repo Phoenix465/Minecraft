@@ -35,6 +35,10 @@ class VBOHandler:
         glDrawArrays(GL_QUADS, 0, len(self.combinedData))
         glBindVertexArray(0)
 
+    def delete(self):
+        del self.vao
+        del self.vbo
+
     def _setCombinedData(self):
         #https://stackoverflow.com/questions/61117412/changing-opengl-vertex-buffer-object-data-via-pyopengl-opengl-arrays-vbo-has-no
 
