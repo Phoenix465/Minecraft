@@ -85,6 +85,18 @@ class Chunk:
 
         self.bottomCentre = bottomCentre
 
+        self.maxVector = self.bottomCentre + Vector3(
+            self.halfSize.X,
+            self.size.Y,
+            self.halfSize.Z
+        )
+
+        self.minVector = self.bottomCentre - Vector3(
+            self.halfSize.X,
+            0,
+            self.halfSize.Z,
+        )
+
         self.mouse0Debounce = False
         self.mouse2Debounce = False
 
@@ -104,6 +116,13 @@ class Chunk:
             Vector3(0, 0, 1): None,
             Vector3(-1, 0, 0): None,
             Vector3(1, 0, 0): None,
+        }
+
+        self.cornerChunks = {
+            Vector3(1, 0, 1): None,
+            Vector3(1, 0, -1): None,
+            Vector3(-1, 0, 1): None,
+            Vector3(-1, 0, -1): None,
         }
 
         self.adjacentBlockData = [
@@ -141,7 +160,7 @@ class Chunk:
                     maxSolidPoint = self.noise.noise2d(x=newPos.X / self.scale, y=newPos.Z / self.scale) + rangeValues[1]
                     maxSolidPoint *= self.size.Y / (rangeValues[1] * 2)
                     maxSolidPoint = int(maxSolidPoint)
-
+                    maxSolidPoint = 5
                     blockType = enums.BlockType.AIR
                     if y == maxSolidPoint:
                         blockType = enums.BlockType.GRASS
@@ -184,7 +203,7 @@ class Chunk:
 
         self.chunkVBO = VBOHandler(combinedChunkData)
 
-    def linkChunk(self, adjacentChunkData):
+    def linkChunk(self, adjacentChunkData, cornerChunkData):
         """
         Sets the chunk adjacent to this one
 
@@ -199,6 +218,7 @@ class Chunk:
         """
 
         self.adjacentChunks = adjacentChunkData
+        self.cornerChunks = cornerChunkData
 
     def updateAllSurface(self):
         """
@@ -286,10 +306,12 @@ class Chunk:
 
         if any(block.surfacesShow) and (block not in self.blocksCanSee):
             self.blocksCanSee = np.append(self.blocksCanSee, [block])
+
             #self.blocksCanSee.append(block)
 
         elif not any(block.surfacesShow) and (block in self.blocksCanSee):
             self.blocksCanSee = np.delete(self.blocksCanSee, np.where(self.blocksCanSee == block))
+
             #self.blocksCanSee.remove(block)
 
     def updateSurfacesAroundBlock(self, block):
@@ -341,19 +363,8 @@ class Chunk:
                         adjacentChunk.updateBlockSurfaces(adjacentChunk.blocks[newCoord.Y][newCoord.X][newCoord.Z])
 
     def isPointInChunk(self, point: Vector3):
-        maxVector = self.bottomCentre + Vector3(
-            self.size.X/2,
-            self.size.Y,
-            self.size.Z/2
-        )
-
-        minVector = self.bottomCentre - Vector3(
-            self.size.X/2,
-            0,
-            self.size.Z/2
-        )
-
-        return minVector.X < point.X < maxVector.X and minVector.Y < point.Y < maxVector.Y and minVector.Z < point.Z < maxVector.Z
+        #print(minVector, "||", maxVector)
+        return self.minVector.X <= point.X < self.maxVector.X and self.minVector.Y <= point.Y <= self.maxVector.Y and self.minVector.Z <= point.Z < self.maxVector.Z
 
     def draw(self):
         """
@@ -459,4 +470,5 @@ class Chunk:
             if self.highlightedBlock and (self.highlightedSurfaceIndex is not None):
                 self.addBlock(self.highlightedBlock, self.highlightedSurfaceIndex)
             elif self.highlightedBlock:
-                print(self.highlightedSurfaceIndex)
+                pass
+                #print(self.highlightedSurfaceIndex)

@@ -6,10 +6,8 @@ Class
 Player - Handles A Single Player
 """
 
-from vector import Vector3
 from camera import Camera
-from blockhandler import Block
-from chunkhandler import Chunk
+from vector import Vector3
 
 
 class Player:

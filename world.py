@@ -11,14 +11,15 @@ from playerhandler import Player
 from opensimplex import OpenSimplex
 from sys import getsizeof
 from OpenGL.GL import GL_QUADS, glBegin, glEnd
-from vector import Vector3
+from vector import Vector3, Vector2
 import numpy as np
 from math import pow
 from pprint import pprint
 from random import randint
 from threading import Thread
-from multiprocessing import Process
+from multiprocessing import Process, Pool
 from time import time
+from ray import raycast, getCloseChunks
 
 
 class World:
@@ -40,7 +41,7 @@ class World:
         Value: Chunk
     """
 
-    def __init__(self, player: Player):
+    def __init__(self, player: Player, displayCentre: tuple):
         self.player = player
 
         self.noise = OpenSimplex(
@@ -49,12 +50,21 @@ class World:
 
         self.chunkSize = Vector3(16, 16, 16)
         self.halfChunk = self.chunkSize / 2
+        self.displayCentre = Vector2(*displayCentre)
+        self.displaySize = self.displayCentre * 2
 
         self.adjacentChunkOffsets = [
             Vector3(0, 0, -1),
             Vector3(0, 0, 1),
             Vector3(-1, 0, 0),
             Vector3(1, 0, 0),
+        ]
+
+        self.cornerChunksOffsets = [
+            Vector3(1, 0, 1),
+            Vector3(1, 0, -1),
+            Vector3(-1, 0, 1),
+            Vector3(-1, 0, -1),
         ]
 
         self.chunks = {
@@ -68,17 +78,36 @@ class World:
 
         }
 
+        self.cornerCurrentChunks = {
+
+        }
+
         self.memoryBlockSee = []
 
-        self.lastPlayerPosition = Vector3(0, 0, 0)
+        self.runEveryXFrame = 5
+        self.runDiffTime = self.runEveryXFrame / 60
+        self.lastRun = time()
+
+        self.framesPassed = 0
+        self.threads = []
+        self.blocksList = []
+
+    def __del__(self):
+        self.delete()
+
+    def tick(self):
+        self.framesPassed += 1
 
     def generateChunks(self):
         s = time()
 
         size = 1
-        for chunkMultX in range(-size, size+1):
-            for chunkMultY in range(-size, size+1):
+        for chunkMultX in range(-size, size + 1):
+            for chunkMultY in range(-size, size + 1):
                 chunkPosition = self.chunkSize * Vector3(chunkMultX, 0, chunkMultY)
+                chunkPosition += self.chunkSize/2
+                chunkPosition *= Vector3(1, 0, 1)
+                #print(chunkPosition)
 
                 newChunk = Chunk(chunkPosition, self.chunkSize, self.noise)
                 newChunk.parentWorld = self
@@ -94,11 +123,13 @@ class World:
             if chunk.isPointInChunk(playerPos):
                 self.currentChunk = chunk
                 self.adjacentCurrentChunk = chunk.adjacentChunks
+                self.cornerCurrentChunks = chunk.cornerChunks
 
                 return
 
         self.currentChunk = None
         self.adjacentCurrentChunk = {}
+        self.cornerCurrentChunks = {}
 
     def draw(self):
         for chunk in self.chunks.values():
@@ -125,58 +156,33 @@ class World:
 
         for chunkPos, chunk in self.chunks.items():
             adjacentData = {}
+            cornerData = {}
 
             for chunkOffset in self.adjacentChunkOffsets:
                 newChunkPos = chunkPos + (chunkOffset * self.chunkSize)
 
                 adjacentData[chunkOffset] = self.chunks.get(newChunkPos, None)
 
-            chunk.linkChunk(adjacentData)
+            for chunkOffset in self.cornerChunksOffsets:
+                newChunkPos = chunkPos + (chunkOffset * self.chunkSize)
+
+                cornerData[chunkOffset] = self.chunks.get(newChunkPos, None)
+
+            chunk.linkChunk(adjacentData, cornerData)
 
         print("Finished Link Chunks", round(time() - s, 2))
 
     def setHighlightedBlockData(self):
-        def multithreadChecker(chunk: Chunk, blocklist: list):
-            blocklist += filter(lambda block: (block.centre - currentCameraPos).magnitude < self.player.camera.maxDist + 1, chunk.blocksCanSee)
-            """for block in chunk.blocksCanSee:
-                dist = (block.centre - currentCameraPos).magnitude
-                if dist < self.player.camera.maxDist + 1:
-                    blocklist.append(block)"""
-
-        currentCameraPos = self.player.camera.currentCameraPosition
-
-        s = time()
-
-        blocksCheck = []
-        threads = []
-        for aroundChunk in np.array([self.currentChunk] + list(self.adjacentCurrentChunk.values())):
-            if not aroundChunk:
-                continue
-
-            aroundChunk.highlightedBlock = None
-            aroundChunk.highlightedSurfaceIndex = None
-
-            threads.append(Thread(target=multithreadChecker, args=(aroundChunk, blocksCheck)))
-
-        for thread in threads:
-            thread.start()
-
-        for thread in threads:
-            thread.join()
-
-        blocksCheck = np.array(blocksCheck)
-
-        self.mouseTouchChunk = self.player.setHighlightedBlockData(blocksCheck)
-        end = time() - s
-        print("Finished Around Chunk Raycasting", end)
-
         if self.mouseTouchChunk:
             highlightedBlock = self.mouseTouchChunk.highlightedBlock
 
             if highlightedBlock:
                 highlightedBlock.drawWireSurfaceShow()
 
-        self.lastPlayerPosition = currentCameraPos
+        currentCameraPos = self.player.camera.currentCameraPosition
+        chunkCheck = getCloseChunks(currentCameraPos, self.player.camera.lookVector, self)
+
+        self.mouseTouchChunk = self.player.setHighlightedBlockData(chunkCheck)
 
     def setup(self):
         self.generateChunks()
@@ -190,9 +196,13 @@ class World:
             self.mouseTouchChunk.HandleMouseClicks()
 
     def delete(self):
-        for chunk in self.chunks.values():
+        print("Exiting...")
+
+        for i, chunk in enumerate(self.chunks.values()):
+            print(f"Deleting Chunk {i}", end=" ")
             if chunk.chunkVBO:
                 chunk.chunkVBO.delete()
+            print("FINISHED")
 
     def updateAllSurfaces(self):
         s = time()

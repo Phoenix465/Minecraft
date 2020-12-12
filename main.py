@@ -1,16 +1,15 @@
 from time import time
 
 import pygame as pg
+from pygame.locals import *
+
 from OpenGL.GL import *
 from OpenGL.GLU import *
-from pygame.locals import *
 
 from playerhandler import Player
 from skyhandler import Sky
 from vector import Vector3
 from world import World
-from blockhandler import Block
-import enums
 
 clock = pg.time.Clock()
 
@@ -30,7 +29,7 @@ def main():
     pg.mouse.set_visible(False)
 
     glMatrixMode(GL_PROJECTION)
-    gluPerspective(70, (display[0] / display[1]), 0.1, 128.0)
+    gluPerspective(70, (display[0] / display[1]), 0.1, 128.0) # 128
 
     glMatrixMode(GL_MODELVIEW)
     viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
@@ -45,19 +44,34 @@ def main():
     player = Player(Vector3(0, 0, 0), displayCentre)
     sky = Sky(player.camera)
 
-    CurrentWorld = World(player)
+    CurrentWorld = World(player, displayCentre)
     CurrentWorld.setup()
+
+    totalSecond = 0
+    frameCount = 0
 
     while True:
         dt = clock.tick(60)
 
+        keyPressed = pg.key.get_pressed()
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit()
                 CurrentWorld.delete()
                 quit()
 
+        if keyPressed[pg.K_ESCAPE] or keyPressed[pg.K_k]:
+            pg.quit()
+            CurrentWorld.delete()
+            quit()
+
         if pg.mouse.get_focused():
+            sGameLoop = time()
+
+            if frameCount % 60 == 0:
+                print("60 Frame:", totalSecond)
+                totalSecond = 0
+
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
             viewMatrix = player.move(dt, viewMatrix)
@@ -67,10 +81,7 @@ def main():
             CurrentWorld.updateCurrentChunk()
 
             # Long One
-            s = time()
             CurrentWorld.setHighlightedBlockData()
-            end = time() - s
-            print("Set Highlighted Block Data", end)
 
             glEnable(GL_LIGHTING)
             glEnable(GL_LIGHT0)
@@ -82,7 +93,7 @@ def main():
             s = time()
             CurrentWorld.draw()
             end = time() - s
-            print("Draw Time", end)
+            #print("Draw Time", end)
 
             glDisable(GL_LIGHT0)
             glDisable(GL_LIGHTING)
@@ -91,6 +102,12 @@ def main():
             glPopMatrix()
 
             player.drawCrosshair()
+            CurrentWorld.tick()
+
+            eGameLoop = time() - sGameLoop
+            totalSecond += eGameLoop
+            frameCount += 1
+            print("Game Loop Time", eGameLoop)
 
         pg.display.flip()
 

@@ -195,7 +195,6 @@ class Block:
 
             self.surfaceVBOs.append(VBOHandler(combinedData))
 
-
     def genMiddleSurface(self):
         """
         Generates the Middle Point of each Surface and appends to the list self.surfaceMiddle
@@ -237,7 +236,7 @@ class Block:
                 glVertex3fv(self.vertices[blockVertex].tuple)
 
         glEnd()
-    
+
     def drawSolid(self, wireSurface=False):
         """
         Draws the surfaces of the block that can be seen, supports wiring the surfaces that can be seen.
@@ -301,18 +300,23 @@ class Block:
 
         glEnd()
 
-    def drawWireSurfaceShow(self):
+    def drawWireSurfaceShow(self, override=False):
+        glBegin(GL_LINES)
+
         for i, blockQuad in enumerate(self.surfaces):
-            if not self.surfacesShow[i]:
+            if not override and not self.surfacesShow[i]:
                 continue
 
             for linkVertexTuple in self.surfaceEdgeLinker:
-                glBegin(GL_LINES)
 
                 for linkVertex in linkVertexTuple:
-                    glColor3fv((1, 1, 1))
+                    if override:
+                        glColor3fv((0, 0, 0))
+                    else:
+                        glColor3fv((1, 1, 1))
+
                     glVertex3fv(self.vertices[blockQuad[linkVertex]].tuple)
-                glEnd()
+        glEnd()
 
     def isPointInBlock(self, point: Vector3):
         """
@@ -331,7 +335,9 @@ class Block:
         maxVector = self.vertices[7]
         minVector = self.vertices[6]
 
-        return minVector.X < point.X < maxVector.X and minVector.Y < point.Y < maxVector.Y and minVector.Z < point.Z < maxVector.Z
+        return minVector.X <= point.X <= maxVector.X and \
+               minVector.Y <= point.Y <= maxVector.Y and \
+               minVector.Z <= point.Z <= maxVector.Z
 
     def closestSurfaceIndex(self, point: Vector3):
         """

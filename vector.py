@@ -341,6 +341,8 @@ class Vector3(object):
             "-": lambda a, b: a - b,
             "*": lambda a, b: a * b,
             "/": lambda a, b: a / b,
+            "%": lambda a, b: a % b,
+
         }
 
         operationText = {
@@ -348,6 +350,7 @@ class Vector3(object):
             "-": ["Subtracted", "Subtraction"],
             "*": ["Multiplied", "Multiplication"],
             "/": ["Divided", "Division"],
+            "%": ["Modded", "Modulus"]
         }
 
         endVector = Vector3(0, 0, 0)
@@ -386,11 +389,17 @@ class Vector3(object):
     def __truediv__(self, other):
         return self.operationHandler(other, "/")
 
+    def __mod__(self, other):
+        return self.operationHandler(other, "%")
+
     def __repr__(self):
         return f"Vector3 X:{self.X} Y:{self.Y} Z:{self.Z}"
 
     def updateList(self,  *args):
         self.list = [self.X, self.Y, self.Z]
+
+    def copy(self):
+        return Vector3(*self.tuple)
 
     def updateTuple(self, *args):
         self.tuple = tuple(self.list)
