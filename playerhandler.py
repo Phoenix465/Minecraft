@@ -8,6 +8,7 @@ Player - Handles A Single Player
 
 from camera import Camera
 from vector import Vector3
+from ray import raycast
 
 
 class Player:
@@ -34,8 +35,17 @@ class Player:
     def move(self, dt, viewMatrix):
         return self.camera.move(dt, viewMatrix)
 
-    def setHighlightedBlockData(self, blockCheck: list):
-        return self.camera.highlightBlock(blockCheck)
+    def setHighlightedBlockData(self, chunkList: list):
+        currentRayPosition = self.camera.currentCameraPosition
+        addVector = self.camera.lookVector * self.camera.raycastUpdateLength
+
+        chunk, block, surfaceI = raycast(currentRayPosition, addVector, self.camera.maxDist, chunkList)
+
+        if chunk:
+            chunk.highlightedBlock = block
+            chunk.highlightedSurfaceIndex = surfaceI
+
+        return chunk
 
     def drawCrosshair(self):
         self.camera.drawCrosshair()

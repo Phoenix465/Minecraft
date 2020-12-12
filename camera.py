@@ -20,9 +20,6 @@ import numpy as np
 from operator import attrgetter
 
 
-# https://towardsdatascience.com/speeding-up-python-code-fast-filtering-and-slow-loops-8e11a09a9c2f
-
-
 class Camera:
     """
     This Class handles the player Camera
@@ -247,86 +244,3 @@ class Camera:
         glPopMatrix()
         glMatrixMode(GL_MODELVIEW)
         glPopMatrix()
-
-    def highlightBlock(self, possibleChunk: list):
-        """
-               Sets the Highlighted Block Data on the Chunk
-               Can set the chunk data to None
-
-               Parameters
-               ----------
-               currentChunk : chunkhandler.Chunk
-                   Chunk that is to be tested for the highlighted block
-
-               maxDist : int
-                   Maximum Distance of the Camera Raycast
-
-               Returns
-               -------
-               None
-               """
-
-        sTotal = time()
-
-        distDiff = 0
-        currentRayPosition = self.currentCameraPosition
-        addVector = self.lookVector * self.raycastUpdateLength
-
-        if len(possibleChunk) == 0:
-            return
-
-        """
-        Set Up: 0.001997232437133789
-        Centring: 0.0
-        Calculate Mag: 0.001993894577026367
-        Filter Length: 204
-        Raycasting 0.004956245422363281
-        Total Raycasting: 0.008947372436523438
-        """
-
-        def convert(num):
-            if num < 0:
-                return num + 16
-
-            if num >= 16:
-                return num % 16
-
-            return num
-
-        lastPos = None
-
-        while distDiff < self.maxDist:
-            closestBlockPos = Vector3(*[round(posP) for posP in currentRayPosition.tuple])
-
-            if closestBlockPos != lastPos:
-                targetChunk = None
-
-                for chunk in possibleChunk:
-                    if chunk.isPointInChunk(closestBlockPos):
-                        targetChunk = chunk
-
-                if targetChunk:
-                    posChunk = closestBlockPos.copy()
-
-                    posChunk.X = convert(posChunk.X)
-                    posChunk.Z = convert(posChunk.Z)
-
-                    targetBlock = targetChunk.blocks[posChunk.Y][posChunk.X][posChunk.Z]
-
-                    if any(targetBlock.surfacesShow):
-                        targetChunk.highlightedBlock = targetBlock
-                        targetChunk.highlightedSurfaceIndex = targetBlock.closestSurfaceIndex(currentRayPosition)
-
-                        eTotal = time() - sTotal
-                        #print("Total Raycasting Finshed:", eTotal)
-
-                        return targetChunk
-
-            lastPos = closestBlockPos
-            currentRayPosition -= addVector
-            distDiff += self.raycastUpdateLength
-
-        eTotal = time() - sTotal
-        #print("Total Raycasting Fail:", eTotal)
-
-        return None
