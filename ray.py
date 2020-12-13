@@ -1,8 +1,38 @@
+"""
+Handles Raycasting
+
+Functions
+-----
+getCloseChunks - Gets two closest Chunks based on lookVector
+
+raycast - Performs a Raycast.
+"""
+
 from vector import Vector3
-#from world import World
 
 
 def getCloseChunks(startPos: Vector3, lookVector: Vector3, world):
+    """
+
+
+    Parameters
+    ----------
+    startPos : Vector3
+        The Start Position of the Range Check
+
+    lookVector : Vector3
+        The Direction of the Range Ray
+
+    world : World
+        The world that the chunks are used from.
+
+    Returns
+    -------
+    chunkCheck : list
+        A list containing Chunks which are to be checked in the Raycasting.
+
+    """
+
     addVector = lookVector * Vector3(1, 0, 1) * 0.1
     updateCurrentCameraPos = startPos - addVector
 
@@ -61,6 +91,29 @@ def getCloseChunks(startPos: Vector3, lookVector: Vector3, world):
 
 
 def raycast(startPoint: Vector3, lookVector: Vector3, maxDist: int, chunkCheckList: list):
+    """
+    Raycasts to find the block hit.
+
+    Parameters
+    ----------
+    startPoint : Vector3
+        Starting Position of the Ray
+
+    lookVector : Vector3
+        Direction of the Ray
+
+    maxDist : int
+        Max Distance of the Ray
+
+    chunkCheckList : list
+        Chunks that the blocks are to be checked from
+
+    Returns
+    -------
+    list
+        Either None list or a list containing about the block hit.
+    """
+
     def convert(num):
         if num < 0:
             return num + 16
@@ -100,10 +153,10 @@ def raycast(startPoint: Vector3, lookVector: Vector3, maxDist: int, chunkCheckLi
                 if any(targetBlock.surfacesShow):
                     closestSurfaceI = targetBlock.closestSurfaceIndex(currentRayPosition)
 
-                    return targetChunk, targetBlock, closestSurfaceI
+                    return [targetChunk, targetBlock, closestSurfaceI]
 
         lastPos = closestBlockPos
         currentRayPosition -= lookVector
         distDiff += lookMag
 
-    return None, None, None
+    return [None, None, None]

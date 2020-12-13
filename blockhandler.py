@@ -11,8 +11,6 @@ from OpenGL.GL import *
 import enums
 from degreesMath import average
 from vector import Vector3
-from numpy import array, float32
-from vbohandler import VBOHandler
 
 colourHandler = enums.BlockColour()
 
@@ -174,27 +172,6 @@ class Block:
     def __repr__(self):
         return "Block"
 
-    def bindData(self):
-        # https://cyrille.rossant.net/2d-graphics-rendering-tutorial-with-pyopengl/
-        # https://stackoverflow.com/questions/15672720/pyopengl-dynamically-updating-values-in-a-vertex-buffer-objecta
-        # http://pyopengl.sourceforge.net/context/tutorials/shader_1.html
-        self.surfaceVBOs = []
-
-        vertexColour = colourHandler.get(self.blockType)
-
-        for i, blockQuad in enumerate(self.surfaces):
-            surfacesList = [self.vertices[blockVertex] for blockVertex in blockQuad]
-
-            combinedData = []
-
-            for vector3 in surfacesList:
-                combined = vector3.list + vertexColour.RGBList + self.normals[i].list
-
-                for comb in combined:
-                    combinedData.append(comb)
-
-            self.surfaceVBOs.append(VBOHandler(combinedData))
-
     def genMiddleSurface(self):
         """
         Generates the Middle Point of each Surface and appends to the list self.surfaceMiddle
@@ -271,14 +248,9 @@ class Block:
                             glVertex3fv(self.vertices[blockQuad[linkVertex]].tuple)
                         glEnd()
 
-    def drawSolidOld(self, wireSurface=False):
+    def drawSolidOld(self):
         """
-        Draws the surfaces of the block that can be seen, supports wiring the surfaces that can be seen.
-
-        Parameters
-        ----------
-        wireSurface : bool
-            Boolean Value refers to whether the surfaces that can be seen should be wired
+        Draws the surfaces of the block that can be seen
 
         Returns
         -------
@@ -301,6 +273,19 @@ class Block:
         glEnd()
 
     def drawWireSurfaceShow(self, override=False):
+        """
+        Draws the wired surface of the block that can be seen
+
+        Parameters
+        ----------
+        override : bool
+            If True then it draws all the wires of the block regardless if they can be seen or not.
+
+        Returns
+        -------
+        None
+        """
+
         glBegin(GL_LINES)
 
         for i, blockQuad in enumerate(self.surfaces):

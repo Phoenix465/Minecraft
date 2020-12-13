@@ -6,20 +6,15 @@ Class
 World - A Single World Handler
 """
 
+from random import randint
+from time import time
+
+from opensimplex import OpenSimplex
+
 from chunkhandler import Chunk
 from playerhandler import Player
-from opensimplex import OpenSimplex
-from sys import getsizeof
-from OpenGL.GL import GL_QUADS, glBegin, glEnd
+from ray import getCloseChunks
 from vector import Vector3, Vector2
-import numpy as np
-from math import pow
-from pprint import pprint
-from random import randint
-from threading import Thread
-from multiprocessing import Process, Pool
-from time import time
-from ray import raycast, getCloseChunks
 
 
 class World:
@@ -36,9 +31,42 @@ class World:
     player : Player
         Player Class To get the Camera Class within it
 
+    noise : opensimplex.OpenSimplex
+        The Noise Data to be shared accross the Chunks
+
+    chunkSize : Vector3
+        THe Size of each Chunk
+
+    halfChunk : Vector3
+        Half Sie of each Chunk
+
+    displayCentre : Vector2
+        The Centre of the Display
+
+    displaySize : Vector2
+        The Full-Size of the display based on the displayCentre
+
+    adjacentChunkOffsets : list
+        A list containing Vector3 with relative offsets to the adjacent Chunks
+
+    cornerChunksOffsets : list
+        A list containing Vector3 with relative offsets to the corner Chunks
+
     chunks: dict
         Key: Vector3 which is the Bottom Centre
         Value: Chunk
+
+    currentChunk : None/Chunk
+        THe Current Chunk the player is in.
+
+    mouseTouchChunk : None/Chunk
+        The Chunk that the mouse hits.
+
+    adjacentCurrentChunk : dict
+        A Vector3: Chunk which contains the offset key and then the chunk value for the adjacent chunks.
+
+    cornerCurrentChunks : dict
+        A Vector3: Chunk which contains the offset key and then the chunk value for the corners chunks.
     """
 
     def __init__(self, player: Player, displayCentre: tuple):
@@ -82,23 +110,18 @@ class World:
 
         }
 
-        self.memoryBlockSee = []
-
-        self.runEveryXFrame = 5
-        self.runDiffTime = self.runEveryXFrame / 60
-        self.lastRun = time()
-
-        self.framesPassed = 0
-        self.threads = []
-        self.blocksList = []
-
     def __del__(self):
         self.delete()
 
-    def tick(self):
-        self.framesPassed += 1
-
     def generateChunks(self):
+        """
+        Generates All the Chunks
+
+        Returns
+        -------
+        None
+        """
+
         s = time()
 
         size = 1
@@ -110,13 +133,20 @@ class World:
                 #print(chunkPosition)
 
                 newChunk = Chunk(chunkPosition, self.chunkSize, self.noise)
-                newChunk.parentWorld = self
 
                 self.chunks[chunkPosition] = newChunk
 
         print("Finished Gen Chunks", round(time() - s, 2))
 
     def updateCurrentChunk(self):
+        """
+        Updates The Chunk that the player is in and the adjacent and corner chunks of that.
+
+        Returns
+        -------
+        None
+        """
+
         playerPos = self.player.camera.currentCameraPosition
 
         for chunk in self.chunks.values():
@@ -132,10 +162,26 @@ class World:
         self.cornerCurrentChunks = {}
 
     def draw(self):
+        """
+        Draws All the Chunks
+
+        Returns
+        -------
+        None
+        """
+
         for chunk in self.chunks.values():
             chunk.draw()
 
     def generateBlocks(self):
+        """
+        Generates the Blocks of each Chunk
+
+        Returns
+        -------
+        None
+        """
+
         s = time()
 
         for chunk in self.chunks.values():
@@ -144,6 +190,14 @@ class World:
         print("Finished Gen Blocks", round(time() - s, 2))
 
     def genChunkVBOs(self):
+        """
+        Generates the VBO of every Chunk
+
+        Returns
+        -------
+        None
+        """
+
         s = time()
 
         for chunk in self.chunks.values():
@@ -152,6 +206,14 @@ class World:
         print("Finished Gen Chunk VBOs", round(time() - s, 2))
 
     def linkChunks(self):
+        """
+        Links each Chunk with the Adjacent and Corner Chunks
+
+        Returns
+        -------
+        None
+        """
+
         s = time()
 
         for chunkPos, chunk in self.chunks.items():
@@ -173,6 +235,14 @@ class World:
         print("Finished Link Chunks", round(time() - s, 2))
 
     def setHighlightedBlockData(self):
+        """
+        Sets the Mouse Touch Chunk of the Player
+
+        Returns
+        -------
+        None
+        """
+
         if self.mouseTouchChunk:
             highlightedBlock = self.mouseTouchChunk.highlightedBlock
 
@@ -185,6 +255,14 @@ class World:
         self.mouseTouchChunk = self.player.setHighlightedBlockData(chunkCheck)
 
     def setup(self):
+        """
+        Sets Up the World
+
+        Returns
+        -------
+        None
+        """
+
         self.generateChunks()
         self.generateBlocks()
         self.linkChunks()
@@ -192,10 +270,26 @@ class World:
         self.genChunkVBOs()
 
     def HandleMouseClicks(self):
+        """
+        Handles the Clicking of the Player
+
+        Returns
+        -------
+        None
+        """
+
         if self.mouseTouchChunk:
             self.mouseTouchChunk.HandleMouseClicks()
 
     def delete(self):
+        """
+        Handles Deletion of the World
+
+        Returns
+        -------
+        None
+        """
+
         print("Exiting...")
 
         for i, chunk in enumerate(self.chunks.values()):
@@ -205,6 +299,14 @@ class World:
             print("FINISHED")
 
     def updateAllSurfaces(self):
+        """
+        Updates all Surfaces of each Chunk
+
+        Returns
+        -------
+        None
+        """
+
         s = time()
 
         for chunk in self.chunks.values():

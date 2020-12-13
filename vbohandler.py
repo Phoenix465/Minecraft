@@ -1,15 +1,21 @@
-import OpenGL.arrays.vbo as glVBO
-from OpenGL.GL import *
-import numpy as np
+"""
+Handler for the VBO
+
+Class
+-----
+VBOHandler - Handles a Single VBO
+"""
+
 from ctypes import c_void_p
 
-#  https://stackoverflow.com/questions/61117412/changing-opengl-vertex-buffer-object-data-via-pyopengl-opengl-arrays-vbo-has-no
+import OpenGL.arrays.vbo as glVBO
+import numpy as np
+from OpenGL.GL import *
 
 
 class VBOHandler:
     def __init__(self, combinedData):
         self.combinedData = combinedData
-        #self._setCombinedData()
         self.combinedData = np.array(self.combinedData, np.float32)
 
         self.vbo = glVBO.VBO(self.combinedData)
@@ -31,6 +37,14 @@ class VBOHandler:
         glBindVertexArray(0)
 
     def draw(self):
+        """
+        Draws the VBO
+
+        Returns
+        -------
+        None
+        """
+
         glBindVertexArray(self.vao)
         glDrawArrays(GL_QUADS, 0, len(self.combinedData))
         glBindVertexArray(0)
@@ -38,13 +52,3 @@ class VBOHandler:
     def delete(self):
         del self.vao
         del self.vbo
-
-    def _setCombinedData(self):
-        #https://stackoverflow.com/questions/61117412/changing-opengl-vertex-buffer-object-data-via-pyopengl-opengl-arrays-vbo-has-no
-
-        for i, vector3 in enumerate(self.nestedVectors):
-            colour = self.nestedColours[i]
-            combined = vector3.list + colour.RGBList + self.normalVectors[i].list
-
-            for comb in combined:
-                self.combinedData.append(comb)

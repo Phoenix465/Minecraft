@@ -6,19 +6,20 @@ Class
 Chunk - This handle a single Chunk
 """
 
-from vector import Vector3, Vector2
-import pygame.mouse as mouse
-from blockhandler import Block
-import enums
-from vbohandler import VBOHandler
 from math import sqrt
-from pprint import pprint
 from random import randint
 from time import time
-import numpy as np
 
+import numpy as np
+import pygame.mouse as mouse
+
+import enums
+from blockhandler import Block
+from vbohandler import VBOHandler
+from vector import Vector3
 
 colourHandler = enums.BlockColour()
+
 
 class Chunk:
     """
@@ -32,13 +33,28 @@ class Chunk:
     size : Vector3
         Size of the Chunk
 
+    noise : opensimplex.OpenSimplex
+        The OpenSimplex noise, to make sure the noise data is the same across chunks.
+
     Attributes
     ----------
+    scale : int
+        Divide Scale for the Noise Library
+
     size : Vector3
         Size of the Chunk
 
+    halfSize : Vector3
+        Half of the Size Vector
+
     bottomCentre : Vector3
         The Position of the Chunk for the Bottom Centre
+
+    maxVector : Vector3
+        The Maximum Point of the Chunk
+
+    minVector : Vector3
+        The Minimum Point of the Chunk
 
     mouse0Debounce : bool
         Debounce for whether the the Left-Mouse Click is already Registered
@@ -68,11 +84,24 @@ class Chunk:
     adjacentBlockData : list
         A list containing Vector3 that are relative to the surfaces on the Block class
 
+    adjacentChunks : dict
+        A Dictionary with a Vector3: Chunk format
+
+    cornerChunks : dict
+        A Dictionary with a Vector3: Chunk format.
+
+    noise : opensimplex.OpenSimplex
+        The OpenSimplex noise, to make sure the noise pattern is the same across chunks.
+
     highlightedBlock : None/Block
         Update by the Camera Class to check what Block is Highlighted
 
     highlightedSurfaceIndex : None/int
         The Surface Index of the Highlighted Surface
+
+    chunkVBO : vbohandler.VBOHandler
+        A VBO (Vector Buffer Object) of the chunk to make drawing fast.
+
     """
 
     def __init__(self, bottomCentre: Vector3, size: Vector3, noise):
@@ -80,8 +109,6 @@ class Chunk:
 
         self.size = size
         self.halfSize = size / 2
-
-        self.parentWorld = None
 
         self.bottomCentre = bottomCentre
 
@@ -139,12 +166,17 @@ class Chunk:
         self.highlightedBlock = None
         self.highlightedSurfaceIndex = None
 
-        self.blocksChecked = []
-        self.blocksInRange = []
-
         self.chunkVBO = None
 
     def generateBlocks(self):
+        """
+        Generates the Blocks for the self.blocks
+
+        Returns
+        -------
+        None
+        """
+
         rangeValues = [-sqrt(2) / 2, sqrt(2) / 2]
 
         self.blocks = np.zeros(self.size.tuple, dtype=Block)
@@ -160,7 +192,7 @@ class Chunk:
                     maxSolidPoint = self.noise.noise2d(x=newPos.X / self.scale, y=newPos.Z / self.scale) + rangeValues[1]
                     maxSolidPoint *= self.size.Y / (rangeValues[1] * 2)
                     maxSolidPoint = int(maxSolidPoint)
-                    maxSolidPoint = 5
+
                     blockType = enums.BlockType.AIR
                     if y == maxSolidPoint:
                         blockType = enums.BlockType.GRASS
@@ -181,6 +213,14 @@ class Chunk:
                     self.blocks[y][x][z] = newBlock
 
     def genChunkVBO(self):
+        """
+        Generates the VBO's for the Chunk
+
+        Returns
+        -------
+        None
+        """
+
         combinedChunkData = []
         self.chunkVBO = None
 
@@ -235,7 +275,7 @@ class Chunk:
                 for bI, block in enumerate(xList):
                     self.updateBlockSurfaces(block)
 
-    def updateBlockSurfaces(self, block, record=False):
+    def updateBlockSurfaces(self, block):
         """
         Updates A Single Block's Surfaces and can either Add or Remove them from self.blocksCanSee
 
@@ -292,9 +332,6 @@ class Chunk:
                             newCoord.Z = self.size.Z - 1
 
                         adjacentBlock = adjacentChunk.blocks[newCoord.Y][newCoord.X][newCoord.Z]
-
-                        if record:
-                            self.blocksChecked.append(adjacentBlock)
 
             if adjacentBlock:
                 if adjacentBlock.blockType == enums.BlockType.AIR:
@@ -436,6 +473,14 @@ class Chunk:
         self.updateVBOChunkAdjacent()
 
     def updateVBOChunkAdjacent(self):
+        """
+        Updates the Chunk adjacent to this Chunk
+
+        Returns
+        -------
+        None
+        """
+
         for chunk in self.adjacentChunks.values():
             if chunk:
                 chunk.genChunkVBO()

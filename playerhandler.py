@@ -7,8 +7,8 @@ Player - Handles A Single Player
 """
 
 from camera import Camera
-from vector import Vector3
 from ray import raycast
+from vector import Vector3
 
 
 class Player:
@@ -36,6 +36,20 @@ class Player:
         return self.camera.move(dt, viewMatrix)
 
     def setHighlightedBlockData(self, chunkList: list):
+        """
+        Sets the Highlighted Block of the Mouse Hit Chunk
+
+        Parameters
+        ----------
+        chunkList : A List containing Chunks
+
+        Returns
+        -------
+        chunk : Chunk
+            THe Chunk that the mouse Hit
+
+        """
+
         currentRayPosition = self.camera.currentCameraPosition
         addVector = self.camera.lookVector * self.camera.raycastUpdateLength
 

@@ -6,18 +6,13 @@ Class
 Camera - This Class handles the Client's Camera
 """
 
-from vector import Vector3, Vector2
-from pygame import K_w, K_a, K_s, K_d, K_q, K_e
-from OpenGL.GL import *
 import pygame.key as key
+from OpenGL.GL import *
+from pygame import K_w, K_a, K_s, K_d, K_q, K_e
 from pygame.mouse import set_pos, get_pos
+
 from degreesMath import *
-import enums
-from blockhandler import Block
-from chunkhandler import Chunk
-from time import time
-import numpy as np
-from operator import attrgetter
+from vector import Vector3, Vector2
 
 
 class Camera:
@@ -42,7 +37,13 @@ class Camera:
 
     raycastUpdateLength : float
         The Accuracy of the highlight-block raycasting
-        
+
+    maxDist : int/float
+        Block Edit Range from the Camera Position
+
+    deltaVector : Vector2
+        Change in Position of the Mouse
+
     lastMousePosition : Vector3
         A Vector2 of the mouse's current position on the window
 
@@ -103,6 +104,19 @@ class Camera:
         self.lookVector = trigAddVector
 
     def turnCamera(self, firstStage: bool):
+        """
+        Handles the Turning of the Camera
+
+        Parameters
+        ----------
+        firstStage : bool
+            A bool which represents whether the Y or X part os the camera should be turned.
+
+        Returns
+        -------
+        None
+        """
+
         if firstStage:
             currentMousePosition = Vector2(*get_pos())
             set_pos(self.displayCentre)
@@ -125,6 +139,22 @@ class Camera:
             glRotatef(self.deltaVector.X, 0.0, 1.0, 0.0)
 
     def moveCamera(self, dt: float, flyMode: bool = True):
+        """
+        Handles the Turning of the Camera
+
+        Parameters
+        ----------
+        dt : float
+            Time since the last frame in ms
+
+        flyMode : bool
+            Whether the Q and E keys can be used (flying)
+
+        Returns
+        -------
+        None
+        """
+
         directionalXVector = Vector3(
             sin(-self.leftRightAngle),
             0,

@@ -1,8 +1,7 @@
 import pygame as pg
-from pygame.locals import *
-
 from OpenGL.GL import *
 from OpenGL.GLU import *
+from pygame.locals import *
 
 cubeVertices = ((1,1,1),(1,1,-1),(1,-1,-1),(1,-1,1),(-1,1,1),(-1,-1,-1),(-1,-1,1),(-1,1,-1))
 cubeEdges = ((0,1),(0,3),(0,4),(1,2),(1,7),(2,5),(2,3),(3,6),(4,6),(4,7),(5,6),(5,7))
