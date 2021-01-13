@@ -399,8 +399,11 @@ class Chunk:
 
                         adjacentChunk.updateBlockSurfaces(adjacentChunk.blocks[newCoord.Y][newCoord.X][newCoord.Z])
 
-    def isPointInChunk(self, point: Vector3):
+    def isPointInChunk(self, point: Vector3, isList=False):
         #print(minVector, "||", maxVector)
+        if isList:
+            return self.minVector.X <= point[0] < self.maxVector.X and self.minVector.Y <= point[1] <= self.maxVector.Y and self.minVector.Z <= point[2] < self.maxVector.Z
+
         return self.minVector.X <= point.X < self.maxVector.X and self.minVector.Y <= point.Y <= self.maxVector.Y and self.minVector.Z <= point.Z < self.maxVector.Z
 
     def draw(self):

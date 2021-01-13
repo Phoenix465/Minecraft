@@ -1,10 +1,9 @@
 from time import time
 
 import pygame as pg
-from pygame.locals import *
-
 from OpenGL.GL import *
 from OpenGL.GLU import *
+from pygame.locals import *
 
 from playerhandler import Player
 from skyhandler import Sky
@@ -28,6 +27,8 @@ def main():
 
     pg.mouse.set_visible(False)
 
+    pg.display.flip()
+
     glMatrixMode(GL_PROJECTION)
     gluPerspective(70, (display[0] / display[1]), 0.1, 128.0) # 128
 
@@ -45,6 +46,7 @@ def main():
     sky = Sky(player.camera)
 
     CurrentWorld = World(player, displayCentre)
+    player.world = CurrentWorld
     CurrentWorld.setup()
 
     totalSecond = 0
@@ -80,7 +82,9 @@ def main():
             CurrentWorld.HandleMouseClicks()
             CurrentWorld.updateCurrentChunk()
 
-            # Long One
+            player.resetConstraints()
+            player.bodyDirectionConstraints()
+
             CurrentWorld.setHighlightedBlockData()
 
             glEnable(GL_LIGHTING)
@@ -102,7 +106,6 @@ def main():
             glPopMatrix()
 
             player.drawCrosshair()
-            CurrentWorld.tick()
 
             eGameLoop = time() - sGameLoop
             totalSecond += eGameLoop

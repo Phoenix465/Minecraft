@@ -124,7 +124,7 @@ class World:
 
         s = time()
 
-        size = 1
+        size = 0
         for chunkMultX in range(-size, size + 1):
             for chunkMultY in range(-size, size + 1):
                 chunkPosition = self.chunkSize * Vector3(chunkMultX, 0, chunkMultY)
@@ -247,7 +247,7 @@ class World:
             highlightedBlock = self.mouseTouchChunk.highlightedBlock
 
             if highlightedBlock:
-                highlightedBlock.drawWireSurfaceShow()
+                highlightedBlock.drawWireSurfaceShow(black=True)
 
         currentCameraPos = self.player.camera.currentCameraPosition
         chunkCheck = getCloseChunks(currentCameraPos, self.player.camera.lookVector, self)
@@ -296,7 +296,7 @@ class World:
             print(f"Deleting Chunk {i}", end=" ")
             if chunk.chunkVBO:
                 chunk.chunkVBO.delete()
-            print("FINISHED")
+            print("FINISHED")   
 
     def updateAllSurfaces(self):
         """

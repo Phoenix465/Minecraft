@@ -272,7 +272,7 @@ class Block:
 
         glEnd()
 
-    def drawWireSurfaceShow(self, override=False):
+    def drawWireSurfaceShow(self, override=False, black=False):
         """
         Draws the wired surface of the block that can be seen
 
@@ -295,7 +295,7 @@ class Block:
             for linkVertexTuple in self.surfaceEdgeLinker:
 
                 for linkVertex in linkVertexTuple:
-                    if override:
+                    if black:
                         glColor3fv((0, 0, 0))
                     else:
                         glColor3fv((1, 1, 1))
@@ -324,7 +324,7 @@ class Block:
                minVector.Y <= point.Y <= maxVector.Y and \
                minVector.Z <= point.Z <= maxVector.Z
 
-    def closestSurfaceIndex(self, point: Vector3):
+    def closestSurfaceIndex(self, point: Vector3, isList=True):
         """
         Given a Point, returns the closest surface index that is closest to it
 

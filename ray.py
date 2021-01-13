@@ -7,6 +7,7 @@ getCloseChunks - Gets two closest Chunks based on lookVector
 
 raycast - Performs a Raycast.
 """
+from time import time
 
 from vector import Vector3
 
@@ -114,6 +115,8 @@ def raycast(startPoint: Vector3, lookVector: Vector3, maxDist: int, chunkCheckLi
         Either None list or a list containing about the block hit.
     """
 
+    s = time()
+
     def convert(num):
         if num < 0:
             return num + 16
@@ -124,18 +127,22 @@ def raycast(startPoint: Vector3, lookVector: Vector3, maxDist: int, chunkCheckLi
         return num
 
     distDiff = 0
-    currentRayPosition = startPoint
+    currentRayPositionList = startPoint.list
     lookMag = lookVector.magnitude
+    lookVectorList = lookVector.list
 
     if len(chunkCheckList) == 0:
-        return
+        return None, None, None
 
     lastPos = None
 
     while distDiff < maxDist:
-        closestBlockPos = Vector3(*[round(posP) for posP in currentRayPosition.tuple])
+        closestBlockPosList = [round(posP) for posP in currentRayPositionList]
 
-        if closestBlockPos != lastPos:
+        if closestBlockPosList != lastPos:
+            currentRayPosition = Vector3(*currentRayPositionList)
+            closestBlockPos = Vector3(*closestBlockPosList)
+
             targetChunk = None
 
             for chunk in chunkCheckList:
@@ -143,6 +150,9 @@ def raycast(startPoint: Vector3, lookVector: Vector3, maxDist: int, chunkCheckLi
                     targetChunk = chunk
 
             if targetChunk:
+                if closestBlockPos.Y >= targetChunk.size.Y or closestBlockPos.Y < 0:
+                    return None, None, None
+
                 posChunk = closestBlockPos.copy()
 
                 posChunk.X = convert(posChunk.X)
@@ -153,10 +163,21 @@ def raycast(startPoint: Vector3, lookVector: Vector3, maxDist: int, chunkCheckLi
                 if any(targetBlock.surfacesShow):
                     closestSurfaceI = targetBlock.closestSurfaceIndex(currentRayPosition)
 
-                    return [targetChunk, targetBlock, closestSurfaceI]
+                    #print("Raycast S", time() - s)
+                    return targetChunk, targetBlock, closestSurfaceI
 
-        lastPos = closestBlockPos
-        currentRayPosition -= lookVector
+            lastPos = closestBlockPosList
+
+        s1 = time()
+        currentRayPositionList = [
+            currentRayPositionList[0] - lookVectorList[0],
+            currentRayPositionList[1] - lookVectorList[1],
+            currentRayPositionList[2] - lookVectorList[2],
+        ]
+        e1 = time() - s1
+
         distDiff += lookMag
 
-    return [None, None, None]
+    #print("Raycast F", time() - s)
+
+    return None, None, None

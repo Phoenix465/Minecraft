@@ -50,7 +50,7 @@ class Camera:
     distance : flaot
         The distance moved per frame - sensitive to change
 
-    sentivity : float
+    sensitivity : float
         Mouse Sensitivity when moving the mouse
 
     upDownAngle : int
@@ -72,13 +72,11 @@ class Camera:
     def __init__(self, startPos: Vector3, displayCentre: tuple):
         self.currentCameraPosition = startPos
         self.lookVector = Vector3(0, 0, 0)
-        self.raycastUpdateLength = 0.1
-        self.maxDist = 5
 
         self.deltaVector = Vector2(0, 0)
 
         self.distance = 0.005  # 0.005
-        self.sentivity = 0.1
+        self.sensitivity = 0.1
 
         self.upDownAngle = 0
         self.leftRightAngle = 0
@@ -121,7 +119,7 @@ class Camera:
             currentMousePosition = Vector2(*get_pos())
             set_pos(self.displayCentre)
 
-            self.deltaVector = (currentMousePosition - self.displayCentre) * self.sentivity
+            self.deltaVector = (currentMousePosition - self.displayCentre) * self.sensitivity
 
             self.upDownAngle += self.deltaVector.Y
             self.leftRightAngle += self.deltaVector.X
@@ -138,7 +136,7 @@ class Camera:
         else:
             glRotatef(self.deltaVector.X, 0.0, 1.0, 0.0)
 
-    def moveCamera(self, dt: float, flyMode: bool = True):
+    def moveCamera(self, dt: float, moveConstraints: dict):
         """
         Handles the Turning of the Camera
 
@@ -146,9 +144,6 @@ class Camera:
         ----------
         dt : float
             Time since the last frame in ms
-
-        flyMode : bool
-            Whether the Q and E keys can be used (flying)
 
         Returns
         -------
@@ -174,33 +169,33 @@ class Camera:
         moveVector = Vector3(0, 0, 0)
         keysPressed = key.get_pressed()
 
-        if keysPressed[K_w]:
+        if keysPressed[K_w] and not moveConstraints["w"]:
             self.currentCameraPosition -= directionalXVector
             moveVector.Z += frameDistance
 
-        if keysPressed[K_s]:
+        if keysPressed[K_s] and not moveConstraints["s"]:
             self.currentCameraPosition += directionalXVector
             moveVector.Z -= frameDistance
 
-        if keysPressed[K_a]:
+        if keysPressed[K_a] and not moveConstraints["a"]:
             self.currentCameraPosition += directionalZVector
             moveVector.X += frameDistance
 
-        if keysPressed[K_d]:
+        if keysPressed[K_d] and not moveConstraints["d"]:
             self.currentCameraPosition -= directionalZVector
             moveVector.X -= frameDistance
 
-        if keysPressed[K_q] and flyMode:
+        if keysPressed[K_q] and not moveConstraints["q"]:
             self.currentCameraPosition.Y -= frameDistance
             moveVector.Y += frameDistance
 
-        if keysPressed[K_e] and flyMode:
+        if keysPressed[K_e] and not moveConstraints["e"]:
             self.currentCameraPosition.Y += frameDistance
             moveVector.Y -= frameDistance
 
         glTranslatef(*moveVector.tuple)
 
-    def move(self, dt, viewMatrix):
+    def move(self, dt, viewMatrix, moveConstraints):
         """
         Controls the Movement of the Camera
 
@@ -224,7 +219,7 @@ class Camera:
         glPushMatrix()
         glLoadIdentity()
 
-        self.moveCamera(dt)
+        self.moveCamera(dt, moveConstraints)
 
         self.turnCamera(False)
 
